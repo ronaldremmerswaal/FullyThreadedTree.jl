@@ -1,0 +1,13 @@
+name = "FullyThreadedTree"
+uuid = "a33edda4-7444-4ccb-bbf0-5a5b5396af4c"
+authors = ["Ronald @ home <r.a.remmerswaal@rug.nl>"]
+version = "0.1.0"
+
+[compat]
+julia = "1"
+
+[extras]
+Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
+
+[targets]
+test = ["Test"]
