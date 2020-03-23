@@ -21,8 +21,7 @@ Tree(parent, level, position, neighbours, children, state) = Tree{length(positio
 
 function initialize_tree(position, state::Function=x->0.)
     D = length(position)
-    cell = Tree(DummyTree{D}(), 0, position, fill(DummyTree{D}(), D, 2), fill(DummyTree{D}(), D, D), state(position))
-    return cell
+    return Tree(DummyTree{D}(), 0, position, fill(DummyTree{D}(), D, 2), fill(DummyTree{D}(), Tuple(2*ones(Int, D))), state(position))
 end
 
 # Refine a single leaf (graded)
@@ -63,7 +62,7 @@ function coarsen!(cell::Tree{D}) where D
     end
 
     # Remove children
-    cell.children = fill(DummyTree{D}(), D, D)
+    cell.children = fill(DummyTree{D}(), Tuple(2*ones(Int, D)))
 
     # Update neighbour pointers (same level only)
     for dir=1:D, side=1:2
@@ -89,7 +88,7 @@ end
         children = cell.children
         Base.Cartesian.@nloops $D i d->1:2 begin
             pos = cell.position + (Float64.(collect(Base.Cartesian.@ntuple $D i)) .- 1.5) / (2 << cell.level)
-            (Base.Cartesian.@nref $D children i) = Tree(cell, cell.level + 1, pos, fill(DummyTree{$D}(), $D, 2), fill(DummyTree{$D}(), $D, $D), state(pos))
+            (Base.Cartesian.@nref $D children i) = Tree(cell, cell.level + 1, pos, fill(DummyTree{$D}(), $D, 2), fill(DummyTree{$D}(), Tuple(2*ones(Int, $D))), state(pos))
         end
     end
 end
