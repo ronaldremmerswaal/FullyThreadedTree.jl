@@ -54,4 +54,4 @@ function max_level(tree::Tree)
     return level
 end
 
-@inline cell_volume(cell::Tree) = 1. / (1 << (2*cell.level))
+@inline cell_volume(cell::Tree{D}) where D = 1. / (1 << (D*cell.level))
