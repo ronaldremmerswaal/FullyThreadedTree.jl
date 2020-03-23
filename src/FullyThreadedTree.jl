@@ -12,6 +12,15 @@ module FullyThreadedTree
 
     export iterate
 
+    include("tools.jl")
+
+    export volume,
+           first_moment,
+           integrate,
+           nr_quads,
+           nr_leaves,
+           quad_volume
+
     include("plotting.jl")
 
     export plot
