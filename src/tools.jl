@@ -54,4 +54,10 @@ function max_level(tree::Tree)
     return level
 end
 
+# function polytope(tree::Tree{D}) where T
+#     poly = Vector(undef, D)
+#     poly[1] = cell.position[1] .+ [-1., 1., 1., -1., -1.] / (2 << (cell.level))
+#     poly[2] = cell.position[2] .+ [-1., -1., 1., 1., -1.] / (2 << (cell.level))
+# end
+
 @inline cell_volume(cell::Tree{D}) where D = 1. / (1 << (D*cell.level))

@@ -3,31 +3,33 @@ function Base.iterate(cell::Tree{D}, state=initialized(cell) ? (cell, 0, Vector{
 
     if element == nothing return nothing end
 
-    if isleaf(element)
+    if !isleaf(element)
+        next_element = element.children[1]
+        push!(indices, 1)
+    elseif isempty(indices)
+        next_element = nothing
+    else
         indices[end] += 1
         if indices[end] <= 1<<D
             next_element = element.parent.children[indices[end]]
+        else
+            next_element = element
+            while indices[end] > 1<<D
+                next_element = next_element.parent
+                pop!(indices)
+                if isempty(indices)
+                    next_element = nothing
+                    break
+                end
+                indices[end] += 1
+                if indices[end] <= 1<<D
+                    next_element = next_element.parent.children[indices[end]]
+                end
+            end
         end
-    else
-        next_element = element.children[1]
-        push!(indices, 1)
     end
 
-    if indices[end] > 1<<D
-        next_element = element
-        while indices[end] > 1<<D
-            next_element = next_element.parent
-            pop!(indices)
-            if isempty(indices)
-                next_element = nothing
-                break
-            end
-            indices[end] += 1
-            if indices[end] <= 1<<D
-                next_element = next_element.parent.children[indices[end]]
-            end
-        end
-    end
+
     return (element, (next_element, count + 1, indices))
 end
 
