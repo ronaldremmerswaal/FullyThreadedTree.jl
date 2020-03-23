@@ -44,7 +44,7 @@ function Base.show(io::IO, tree::Tree)
             print(io, "on level $(tree.level) ")
         end
         if !isleaf(tree) && !compact
-            print(io, "with $(1 + max_level(tree)) levels and $(nr_leaves(tree)) leaves out of $(nr_cells(tree)) cells")
+            print(io, "with $(levels(tree)) levels and $(nr_leaves(tree)) leaves out of $(nr_cells(tree)) cells")
         end
     end
 end

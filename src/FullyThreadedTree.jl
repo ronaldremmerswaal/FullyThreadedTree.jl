@@ -20,7 +20,8 @@ module FullyThreadedTree
            integrate,
            nr_cells,
            nr_leaves,
-           cell_volume
+           cell_volume,
+           levels
 
     include("plotting.jl")
 

@@ -46,12 +46,12 @@ function nr_cells(tree::Tree)
     return nr
 end
 
-function max_level(tree::Tree)
+function levels(tree::Tree)
     level = 0
     for cell ∈ tree
         level = max(level, cell.level)
     end
-    return level
+    return 1 + level
 end
 
 # function polytope(tree::Tree{D}) where T
