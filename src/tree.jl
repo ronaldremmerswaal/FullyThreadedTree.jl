@@ -107,13 +107,11 @@ end
     quote
         children = cell.children
         Base.Cartesian.@nloops $D i d->1:2 begin
-            indices = Base.Cartesian.@ntuple $D i
-
             child = (Base.Cartesian.@nref $D children i)
 
             Base.Cartesian.@nexprs $D d -> begin
                 # Half of the neighbours are siblings
-                child.neighbours[d,3-i_d] = (Base.Cartesian.@nref $D children i -> i == d ? 3 - i_d : indices[i])
+                child.neighbours[d,3-i_d] = (Base.Cartesian.@nref $D children k -> k == d ? 3 - i_d : i_k)
 
                 # The other half aren't
                 neighbour_parent = cell.neighbours[d,i_d]
@@ -130,7 +128,7 @@ end
                     else
                         # If neighbouring parent has children, then take neighbouring child
                         neighbour_children = neighbour_parent.children
-                        neighbour = (Base.Cartesian.@nref $D neighbour_children i -> i == d ? 3 - i_d : indices[i])
+                        neighbour = (Base.Cartesian.@nref $D neighbour_children k -> k == d ? 3 - i_d : i_k)
 
                         # Also update the neighbours of the neighbour (only when they are of equal level)
                         neighbour_neighbours = neighbour.neighbours
