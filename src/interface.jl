@@ -1,4 +1,4 @@
-function Base.iterate(quad::Quad, state=initialized(quad) ? (quad, 0, Vector{Int}())  : nothing)
+function Base.iterate(cell::Tree, state=initialized(cell) ? (cell, 0, Vector{Int}())  : nothing)
     element, count, indices = state
 
     if element == nothing return nothing end
@@ -29,4 +29,18 @@ function Base.iterate(quad::Quad, state=initialized(quad) ? (quad, 0, Vector{Int
         end
     end
     return (element, (next_element, count + 1, indices))
+end
+
+function Base.show(io::IO, tree::Tree)
+    compact = get(io, :compact, false)
+
+    print(io, "Tree ")
+    if tree.level == 0
+        print(io, "root ")
+    else
+        print(io, "on level $(tree.level) ")
+    end
+    if !isleaf(tree) && !compact
+        print(io, "with $(1 + max_level(tree)) levels and $(nr_leaves(tree)) leaves out of $(nr_cells(tree)) cells")
+    end
 end

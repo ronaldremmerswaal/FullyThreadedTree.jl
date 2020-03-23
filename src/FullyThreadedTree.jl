@@ -1,25 +1,26 @@
 module FullyThreadedTree
 
-    include("quad.jl")
+    include("tree.jl")
 
-    export Quad,
-           initialize_quadtree,
+    export Tree,
+           initialize_tree,
            refine!,
            isleaf,
            isleafparent
 
     include("interface.jl")
 
-    export iterate
+    export iterate,
+           show
 
     include("tools.jl")
 
     export volume,
            first_moment,
            integrate,
-           nr_quads,
+           nr_cells,
            nr_leaves,
-           quad_volume
+           cell_volume
 
     include("plotting.jl")
 

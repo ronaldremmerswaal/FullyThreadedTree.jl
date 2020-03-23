@@ -1,49 +1,57 @@
-function volume(tree::Quad)
+function volume(tree::Tree)
     vol = 0.
-    for quad ∈ tree
-        if isleaf(quad)
-            vol += quad_volume(quad)
+    for cell ∈ tree
+        if isleaf(cell)
+            vol += cell_volume(cell)
         end
     end
     return vol
 end
 
-function first_moment(tree::Quad)
+function first_moment(tree::Tree)
     moment = [0., 0.]
-    for quad ∈ tree
-        if isleaf(quad)
-            moment += quad.position .* quad_volume(quad)
+    for cell ∈ tree
+        if isleaf(cell)
+            moment += cell.position .* cell_volume(cell)
         end
     end
     return moment
 end
 
-function integrate(tree::Quad)
+function integrate(tree::Tree)
     state = zero(tree.state)
-    for quad ∈ tree
-        if isleaf(quad)
-            state += quad.state * quad_volume(quad)
+    for cell ∈ tree
+        if isleaf(cell)
+            state += cell.state * cell_volume(cell)
         end
     end
     return state
 end
 
-function nr_leaves(tree::Quad)
+function nr_leaves(tree::Tree)
     nr = 0
-    for quad ∈ tree
-        if isleaf(quad)
+    for cell ∈ tree
+        if isleaf(cell)
             nr += 1
         end
     end
     return nr
 end
 
-function nr_quads(tree::Quad)
+function nr_cells(tree::Tree)
     nr = 0
-    for quad ∈ tree
+    for cell ∈ tree
         nr += 1
     end
     return nr
 end
 
-@inline quad_volume(quad::Quad) = 1. / (1 << (2*quad.level))
+function max_level(tree::Tree)
+    level = 0
+    for cell ∈ tree
+        level = max(level, cell.level)
+    end
+    return level
+end
+
+@inline cell_volume(cell::Tree) = 1. / (1 << (2*cell.level))
