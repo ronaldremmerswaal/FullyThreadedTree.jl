@@ -2,7 +2,7 @@ using Plots
 
 import Plots.plot
 
-function plot(tree::Tree)
+function plot(tree::Tree{2})
     X = Vector()
     Y = Vector()
     Z = Vector()
