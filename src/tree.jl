@@ -25,7 +25,7 @@ end
 
 
 # Refine a single leaf (graded)
-function refine!(cell::Tree; state::Function=x->0., recurse=false)
+function refine!(cell::Tree, state::Function=x->0.; recurse=false)
     if isleaf(cell)
         # Setup leaf children
         initialize_children!(cell, state)
@@ -35,13 +35,15 @@ function refine!(cell::Tree; state::Function=x->0., recurse=false)
 
         # NB the neighbouring neighbours of equal level are updated in set_neighbours_of_children!
     elseif recurse
-        refine!(cell.children, state, recurse=true, issorted=true)
+        for child ∈ cell.children
+            refine!(child, state, recurse=true)
+        end
     end
 
 end
 
 # Refine a list of leaves
-function refine!(cells::Vector{Tree}; state::Function=x->0., recurse=false, issorted=false)
+function refine!(cells::Vector{Tree}, state::Function=x->0.; recurse=false, issorted=false)
 
     if !issorted
         # Order cells in increasing level

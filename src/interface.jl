@@ -4,17 +4,20 @@ function Base.iterate(tuple::Tuple{Tree, Function}, state=initialized(tuple[1]) 
     element, count, indices = state
 
     if element == nothing return nothing end
-
     filter = tuple[2]
-    next_element = element
-    while true
-        next_element = find_next_element(next_element, indices)
-        if next_element == nothing || filter(next_element) break end
-    end
 
-    return (element, (next_element, count + 1, indices))
+    next_element = find_next_element(element, indices)
+    if !filter(element)
+        return iterate(tuple, (next_element, count, indices))
+    else
+        return (element, (next_element, count + 1, indices))
+    end
 end
 
+# indices[l] yields the child index at level l in the following sense
+# element = element.parent.children[indices[end]]
+#         = element.parent.parent.children[indices[end-1]].children[end]
+#         = ...
 function find_next_element(element::Tree{D}, indices::Vector{Int}) where D
     if !isleaf(element)
         # Depth first: go to higher level
@@ -23,25 +26,19 @@ function find_next_element(element::Tree{D}, indices::Vector{Int}) where D
     elseif isempty(indices)
         next_element = nothing
     else
-        indices[end] += 1
-        if indices[end] <= 1<<D
-            # Go to sibling
-            next_element = element.parent.children[indices[end]]
+        # Find sibling or sibling of parent (or grandparent etc.)
+        level = findlast(index -> index < 1<<D, indices)
+        if level == nothing
+            next_element = nothing
         else
-            # Find sibling of parent
+            nr_to_pop = length(indices) - level
             next_element = element
-            while indices[end] > 1<<D
+            for i=1:nr_to_pop
                 next_element = next_element.parent
                 pop!(indices)
-                if isempty(indices)
-                    next_element = nothing
-                    break
-                end
-                indices[end] += 1
-                if indices[end] <= 1<<D
-                    next_element = next_element.parent.children[indices[end]]
-                end
             end
+            indices[end] += 1
+            next_element = next_element.parent.children[indices[end]]
         end
     end
 
