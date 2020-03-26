@@ -15,7 +15,7 @@ Face{N,D,1}(cell::AbstractTree{N}, other_cell::AbstractTree{N}) where {N,D} = Fa
 @inline regular(face::Face) = initialized(face.cells[1]) && initialized(face.cells[2]) && face.cells[1].level == face.cells[2].level
 @inline regular(face::AbstractFace) = false
 
-@inline active(face::Face) = (active(face.cells[1]) && active(face.cells[2])) || (at_boundary(face) && ((active(face.cells[1]) && !active(face.cells[2])) || (active(face.cells[2]) && !active(face.cells[1]))))
+@inline active(face::Face) = (active(face.cells[1]) && active(face.cells[2])) || (at_boundary(face) && (active(face.cells[1]) || active(face.cells[2])))
 @inline active(face::AbstractFace) = false
 
 @inline initialized(face::AbstractFace) = false

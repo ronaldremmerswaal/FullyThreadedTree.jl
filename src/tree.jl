@@ -28,7 +28,6 @@ end
 @inline parent_of_active(cell::AbstractTree) = false
 
 @inline other_side(side) = 3 - side
-# @inline other_side(::Val{N}) where N = 3 - N
 
 # Refine a single leaf (graded)
 function refine!(cell::Tree, state::Function=x->0.; recurse=false)
@@ -71,7 +70,7 @@ function coarsen!(cell::Tree{N}) where N
     end
 
     # Remove children
-    for (i, child) ∈ enumerate(cell.children)
+    for i ∈ LinearIndices(cell.children)
         cell.children[i] = DummyTree{N}()
     end
 
