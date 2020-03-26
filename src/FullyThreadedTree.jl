@@ -1,13 +1,27 @@
 module FullyThreadedTree
 
+    abstract type AbstractTree{N} end
+    abstract type AbstractFace{N,D} end
+
+    include("face.jl")
+
+    export Face,
+           faces,
+           cells,
+           at_boundary,
+           at_refinement,
+           ordinary,
+           active
+
+
     include("tree.jl")
 
     export Tree,
            initialize_tree,
            refine!,
            coarsen!,
-           isleaf,
-           isleafparent,
+           active,
+           parent_of_active,
            initialized
 
     include("interface.jl")
@@ -16,16 +30,9 @@ module FullyThreadedTree
            show,
            length,
            cells,
-           leaves,
-           leafparents
+           active_cells,
+           parents_of_active_cell
 
-    include("grid.jl")
-
-    export Grid,
-           Face,
-           nr_faces,
-           nr_leaves,
-           faces
 
     include("tools.jl")
 

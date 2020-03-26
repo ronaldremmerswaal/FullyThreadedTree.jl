@@ -4,7 +4,7 @@ function Base.iterate(tuple::Tuple{Tree, Function}, state=initialized(tuple[1]) 
     element, count, indices = state
 
     if element == nothing return nothing end
-    filter = tuple[2]
+    tree, filter = tuple
 
     next_element = find_next_element(element, indices)
     while !filter(element)
@@ -19,8 +19,8 @@ end
 # element = element.parent.children[indices[end]]
 #         = element.parent.parent.children[indices[end-1]].children[end]
 #         = ...
-function find_next_element(element::Tree{D}, indices::Vector{Int}) where D
-    if !isleaf(element)
+function find_next_element(element::Tree{N}, indices::Vector{Int}) where N
+    if !active(element)
         # Depth first: go to higher level
         next_element = element.children[1]
         push!(indices, 1)
@@ -28,7 +28,7 @@ function find_next_element(element::Tree{D}, indices::Vector{Int}) where D
         next_element = nothing
     else
         # Find sibling or sibling of parent (or grandparent etc.)
-        level = findlast(index -> index < 1<<D, indices)
+        level = findlast(index -> index < 1<<N, indices)
         if level == nothing
             next_element = nothing
         else
@@ -56,18 +56,18 @@ function Base.show(io::IO, tree::Tree)
         else
             print(io, "on level $(tree.level) ")
         end
-        if !isleaf(tree) && !compact
-            print(io, "with $(levels(tree)) levels and $(length(leaves(tree))) leaves out of $(length(cells(tree))) cells")
+        if !active(tree) && !compact
+            print(io, "with $(levels(tree)) levels and $(length(active_cells(tree))) active_cells out of $(length(cells(tree))) cells")
         end
     end
 end
 
 cells(tree::Tree) = (tree, x -> true)
 cells(tree::Tree, level::Int) = (tree, x -> x.level == level)
-leaves(tree::Tree) = (tree, isleaf)
-leaves(tree::Tree, level::Int) = (tree, x -> isleaf(x) && x.level == level)
-leafparents(tree::Tree) = (tree, isleafparent)
-leafparents(tree::Tree, level::Int) = (tree, x -> isleafparent(x) && x.level == level)
+active_cells(tree::Tree) = (tree, active)
+active_cells(tree::Tree, level::Int) = (tree, x -> active(x) && x.level == level)
+parents_of_active_cell(tree::Tree) = (tree, parent_of_active)
+parents_of_active_cell(tree::Tree, level::Int) = (tree, x -> parent_of_active(x) && x.level == level)
 
 function Base.length(tuple::Tuple{Tree, Function})
     count = 0
@@ -76,3 +76,5 @@ function Base.length(tuple::Tuple{Tree, Function})
     end
     return count
 end
+
+# function faces(tree::Tree) =

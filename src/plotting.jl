@@ -7,7 +7,7 @@ function plot(tree::Tree{2})
     Y = Vector()
     Z = Vector()
     max_level = 0
-    for leaf ∈ leaves(tree)
+    for leaf ∈ active_cells(tree)
         append!(X, NaN)
         append!(Y, NaN)
         # append!(Z, 1.)

@@ -12,12 +12,12 @@ shape(x) = tanh(32 * pi * flower(x))
 tree = Tree([0., 0.], shape)
 
 function adaptive_refinement!(tree, fun, max_level, error_tolerance)
-    if isleaf(tree) refine!(tree, fun) end
+    if active(tree) refine!(tree, fun) end
 
     max_error = Vector()
     integral = Vector()
     nr_of_cells = Vector()
-    nr_of_leaves = Vector()
+    nr_of_active_cells = Vector()
     nr_marked_cells = Vector()
 
     for level = 1:max_level
@@ -25,7 +25,7 @@ function adaptive_refinement!(tree, fun, max_level, error_tolerance)
 
         push!(max_error, 0.)
         push!(nr_marked_cells, 0)
-        for cell ∈ leafparents(tree)
+        for cell ∈ parents_of_active_cell(tree)
             error_estimate = abs(cell.state - sum([child.state for child ∈ cell.children]) / 4)
             max_error[end] = max(error_estimate, max_error[end])
             if error_estimate > error_tolerance
@@ -35,7 +35,7 @@ function adaptive_refinement!(tree, fun, max_level, error_tolerance)
         end
         push!(integral, integrate(tree))
         push!(nr_of_cells, length(cells(tree)))
-        push!(nr_of_leaves, length(leaves(tree)))
+        push!(nr_of_active_cells, length(active_cells(tree)))
 
         if length(marked) == 0
             max_level = level
@@ -46,7 +46,7 @@ function adaptive_refinement!(tree, fun, max_level, error_tolerance)
     end
 
     formatter = Dict(0 => (v, i) -> typeof(v) == Int ? Int(v) : round(v; digits=5))
-    pretty_table(hcat(1 : max_level, nr_of_leaves, nr_of_cells, nr_marked_cells, max_error, integral), ["level", "# leaves", "# cells", "# marked", "error", "integral"], tf = markdown, formatter = formatter)
+    pretty_table(hcat(1 : max_level, nr_of_active_cells, nr_of_cells, nr_marked_cells, max_error, integral), ["level", "# active_cells", "# cells", "# marked", "error", "integral"], tf = markdown, formatter = formatter)
 
 end
 
