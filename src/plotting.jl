@@ -2,6 +2,23 @@ using Plots
 
 import Plots.plot
 
+function plot(tree::Tree{1})
+    X = Vector()
+    Y = Vector()
+    max_level = 0
+    for cell ∈ active_cells(tree)
+        push!(X, cell.position[1])
+        push!(Y, cell.state)
+
+        max_level = max(max_level, cell.level)
+    end
+
+    plot(X, Y, legend=false)
+    plot!(X, zeros(length(X)), seriestype=:scatter, markersize = 20. /  (1 << max_level), legend=false)
+
+    return current()
+end
+
 function plot(tree::Tree{2})
     X = Vector()
     Y = Vector()

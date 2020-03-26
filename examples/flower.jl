@@ -21,7 +21,7 @@ function adaptive_refinement(fun::Function, max_level::Int, error_tolerance; pri
         nr_marked_cells = Vector()
     end
 
-    for level = 1:max_level
+    for level = 2:max_level
         marked = Vector{Tree}()
 
         if print_table
@@ -44,7 +44,7 @@ function adaptive_refinement(fun::Function, max_level::Int, error_tolerance; pri
             push!(nr_of_cells, length(cells(tree)))
             push!(nr_of_active_cells, length(active_cells(tree)))
         end
-        
+
         if length(marked) == 0
             max_level = level
             break
@@ -53,11 +53,11 @@ function adaptive_refinement(fun::Function, max_level::Int, error_tolerance; pri
 
     if print_table
         formatter = Dict(0 => (v, i) -> typeof(v) == Int ? Int(v) : round(v; digits=5))
-        pretty_table(hcat(1 : max_level, nr_of_active_cells, nr_of_cells, nr_marked_cells, max_error, integral), ["level", "# active_cells", "# cells", "# marked", "error", "integral"], tf = markdown, formatter = formatter)
+        pretty_table(hcat(2 : max_level, nr_of_active_cells, nr_of_cells, nr_marked_cells, max_error, integral), ["level", "# active_cells", "# cells", "# marked", "error", "integral"], tf = markdown, formatter = formatter)
     end
 
     return tree
 end
 
-tree = adaptive_refinement(shape, max_level, error_tolerance)
+tree = adaptive_refinement(shape, max_level, error_tolerance, print_table=true)
 display(plot(tree))
