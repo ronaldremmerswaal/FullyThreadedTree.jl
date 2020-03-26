@@ -9,7 +9,7 @@ R = pi / 12.
 flower(x) = x[1]^2 + x[2]^2 - R^2 * (1 + 0.25 * cos(5 * atan(x[2], x[1]) + 1))^2
 shape(x) = tanh(32 * pi * flower(x))
 
-tree = Tree([0., 0.], shape)
+tree = Tree([0., 0.], state=shape)
 
 function adaptive_refinement!(tree, fun, max_level, error_tolerance)
     if active(tree) refine!(tree, fun) end

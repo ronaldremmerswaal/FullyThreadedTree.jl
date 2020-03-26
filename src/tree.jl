@@ -11,11 +11,12 @@ struct Tree{N} <: AbstractTree{N}
 end
 
 Tree(parent, level, position, faces, children, state) = Tree{length(position)}(parent, level, position, faces, children, state)
-function Tree(position, state::Function=x->0.)
+function Tree(position; state::Function=x->0., periodic::Vector{Bool} = fill(false, length(position)))
     N = length(position)
     tree = Tree(DummyTree{N}(), 0, position, fill(DummyFace{N,0}(), N, 2), fill(DummyTree{N}(), Tuple(2*ones(Int, N))), state(position))
     for dir=1:N, side=1:2
-        tree.faces[dir,side] = Face{N,dir,side}(tree, DummyTree{N}())
+        neigh = periodic[dir] ? tree : DummyTree{N}()
+        tree.faces[dir,side] = Face{N,dir,side}(tree, neigh)
     end
     return tree
 end
