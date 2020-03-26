@@ -15,8 +15,8 @@ end
 
 Tree(parent, level, position, neighbours, children, state) = Tree{length(position)}(parent, level, position, neighbours, children, state)
 
-@inline isleaf(cell) = !isdefined(cell.children[1], :level)
-@inline initialized(cell) = isdefined(cell, :level)
+@inline isleaf(cell) = !isa(cell.children[1], Tree)
+@inline initialized(cell) = isa(cell, Tree)
 @inline isleafparent(cell) = !isleaf(cell) && isleaf(cell.children[1])
 
 function initialize_tree(position, state::Function=x->0.)
@@ -55,10 +55,11 @@ function refine!(cells::Vector{Tree}, state::Function=x->0.; recurse=false)
     end
 end
 
-# Coarsen a single leaf (not graded)
+# Coarsen a single leaf (graded in the sense that if neighbours are of a higher level then we do not coarsen)
 function coarsen!(cell::Tree{D}) where D
     for neighbour ∈ cell.neighbours
-        if neighbour.level > cell.level return end
+        # graded noncoarsening
+        if !isleaf(neighbour) return end
     end
 
     # Remove children

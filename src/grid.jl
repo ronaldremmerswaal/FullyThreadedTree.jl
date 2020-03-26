@@ -6,15 +6,9 @@ struct Face <: AbstractFace
 end
 
 struct Grid <: AbstractGrid
-    tree::Tree
-    faces::Vector{Face}
-
-    nr_leaves
-
-    Grid(tree, faces) = new(tree, faces, nr_leaves(tree))
+    tree::AbstractTree
+    faces::Vector{AbstractFace}
 end
 
-@inline nr_leaves(grid::Grid) = grid.nr_leaves
-@inline nr_faces(grid::Grid) = length(grid.faces)
 @inline faces(grid::Grid) = grid.faces
-@inline cells(grid::Grid) = grid.tree
+@inline cells(grid::Grid) = cells(grid.tree)

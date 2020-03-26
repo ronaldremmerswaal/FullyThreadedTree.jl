@@ -4,8 +4,8 @@
 Implementation of a fully threaded tree (mostly) as described in [1].
 
 ## TODO
-- Neighbours via faces; face = tuple(cells)
-- Iterator over faces
+- Neighbours via faces; face = tuple(cells). Move neighbours to state and functionality to grid
+- Iterator over active faces
 
 
 ---
