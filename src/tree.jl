@@ -19,9 +19,9 @@ function Tree(position, state::Function=x->0.)
     return Tree(DummyTree{D}(), 0, position, fill(DummyTree{D}(), D, 2), fill(DummyTree{D}(), Tuple(2*ones(Int, D))), state(position))
 end
 
-@inline isleaf(cell) = !isa(cell.children[1], Tree)
-@inline initialized(cell) = isa(cell, Tree)
-@inline isleafparent(cell) = !isleaf(cell) && isleaf(cell.children[1])
+@inline isleaf(cell::Tree) = !isa(cell.children[1], Tree)
+@inline initialized(cell::AbstractTree) = isa(cell, Tree)
+@inline isleafparent(cell::Tree) = !isleaf(cell) && isleaf(cell.children[1])
 
 
 # Refine a single leaf (graded)
@@ -56,19 +56,22 @@ function refine!(cells::Vector{Tree}, state::Function=x->0.; recurse=false, isso
     end
 end
 
-# Coarsen a single leaf (graded in the sense that if neighbours are of a higher level then we do not coarsen)
+# Coarsen a single leafparent (graded in the sense that if neighbours are of a higher level then we do not coarsen)
 function coarsen!(cell::Tree{D}) where D
+    if !isleafparent(cell) return end
     for neighbour ∈ cell.neighbours
         # graded noncoarsening
-        if !isleaf(neighbour) return end
+        if initialized(neighbour) && !isleaf(neighbour) return end
     end
 
     # Remove children
-    cell.children = fill(DummyTree{D}(), Tuple(2*ones(Int, D)))
+    for (i, child) ∈ enumerate(cell.children)
+        cell.children[i] = DummyTree{D}()
+    end
 
     # Update neighbour pointers (same level only)
     for dir=1:D, side=1:2
-        if cell.neighbours[dir,side].level == cell.level + 1
+        if initialized(cell.neighbours[dir,side]) && cell.neighbours[dir,side].level == cell.level + 1
             cell.neighbours[dir,side].neighbours[dir,3-side] = cell
         end
     end

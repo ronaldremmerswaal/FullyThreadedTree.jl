@@ -5,6 +5,7 @@ module FullyThreadedTree
     export Tree,
            initialize_tree,
            refine!,
+           coarsen!,
            isleaf,
            isleafparent
 
