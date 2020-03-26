@@ -1,46 +1,38 @@
 function volume(tree::Tree)
     vol = 0.
-    for cell ∈ tree
-        if isleaf(cell)
-            vol += cell_volume(cell)
-        end
+    for leaf ∈ leaves(tree)
+        vol += cell_volume(leaf)
     end
     return vol
 end
 
 function first_moment(tree::Tree)
     moment = [0., 0.]
-    for cell ∈ tree
-        if isleaf(cell)
-            moment += cell.position .* cell_volume(cell)
-        end
+    for leaf ∈ leaves(tree)
+        moment += leaf.position .* cell_volume(leaf)
     end
     return moment
 end
 
 function integrate(tree::Tree)
     state = zero(tree.state)
-    for cell ∈ tree
-        if isleaf(cell)
-            state += cell.state * cell_volume(cell)
-        end
+    for leaf ∈ leaves(tree)
+        state += leaf.state * cell_volume(leaf)
     end
     return state
 end
 
 function nr_leaves(tree::Tree)
     nr = 0
-    for cell ∈ tree
-        if isleaf(cell)
-            nr += 1
-        end
+    for leaf ∈ leaves(tree)
+        nr += 1
     end
     return nr
 end
 
 function nr_cells(tree::Tree)
     nr = 0
-    for cell ∈ tree
+    for cell ∈ cells(tree)
         nr += 1
     end
     return nr
@@ -48,7 +40,7 @@ end
 
 function levels(tree::Tree)
     level = 0
-    for cell ∈ tree
+    for cell ∈ cells(tree)
         level = max(level, cell.level)
     end
     return 1 + level

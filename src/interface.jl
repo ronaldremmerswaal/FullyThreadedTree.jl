@@ -1,9 +1,23 @@
-function Base.iterate(cell::Tree{D}, state=initialized(cell) ? (cell, 0, Vector{Int}())  : nothing) where D
+Base.iterate(tree::Tree) = iterate((tree, x->true))
+
+function Base.iterate(tuple::Tuple{Tree, Function}, state=initialized(tuple[1]) ? (tuple[1], 0, Vector{Int}())  : nothing)
     element, count, indices = state
 
     if element == nothing return nothing end
 
+    filter = tuple[2]
+    next_element = element
+    while true
+        next_element = find_next_element(next_element, indices)
+        if next_element == nothing || filter(next_element) break end
+    end
+
+    return (element, (next_element, count + 1, indices))
+end
+
+function find_next_element(element::Tree{D}, indices::Vector{Int}) where D
     if !isleaf(element)
+        # Depth first: go to higher level
         next_element = element.children[1]
         push!(indices, 1)
     elseif isempty(indices)
@@ -11,8 +25,10 @@ function Base.iterate(cell::Tree{D}, state=initialized(cell) ? (cell, 0, Vector{
     else
         indices[end] += 1
         if indices[end] <= 1<<D
+            # Go to sibling
             next_element = element.parent.children[indices[end]]
         else
+            # Find sibling of parent
             next_element = element
             while indices[end] > 1<<D
                 next_element = next_element.parent
@@ -29,14 +45,13 @@ function Base.iterate(cell::Tree{D}, state=initialized(cell) ? (cell, 0, Vector{
         end
     end
 
-
-    return (element, (next_element, count + 1, indices))
+    return next_element
 end
 
 function Base.show(io::IO, tree::Tree)
     compact = get(io, :compact, false)
 
-    print(io, "Tree ")
+    print(io, "$(typeof(tree)) ")
     if initialized(tree)
         if tree.level == 0
             print(io, "root ")
@@ -48,3 +63,7 @@ function Base.show(io::IO, tree::Tree)
         end
     end
 end
+
+cells(tree::Tree) = (tree, x->true)
+leaves(tree::Tree) = (tree, isleaf)
+leafparents(tree::Tree) = (tree, isleafparent)

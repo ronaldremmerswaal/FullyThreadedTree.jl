@@ -27,7 +27,7 @@ function adaptive_refinement!(tree, fun, max_level, error_tolerance)
         push!(nr_cells, 0)
         push!(nr_leaf_cells, 0)
         push!(nr_marked_cells, 0)
-        for cell ∈ tree
+        for cell ∈ cells(tree)
             nr_cells[end] += 1
 
             if isleaf(cell) nr_leaf_cells[end] += 1 end

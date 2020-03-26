@@ -11,7 +11,19 @@ module FullyThreadedTree
     include("interface.jl")
 
     export iterate,
-           show
+           show,
+           length,
+           cells,
+           leaves,
+           leafparents
+
+    include("grid.jl")
+
+    export Grid,
+           Face,
+           nr_faces,
+           nr_leaves,
+           faces
 
     include("tools.jl")
 
