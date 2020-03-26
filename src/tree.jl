@@ -100,7 +100,10 @@ end
     quote
         children = cell.children
         @nloops $N i d->1:2 begin
-            pos = cell.position + (Float64.(collect(@ntuple $N i)) .- 1.5) / (2 << cell.level)
+            pos = copy(cell.position)
+            @nexprs $N d -> begin
+                pos[d] += (Float64(i_d) .- 1.5) / (2 << cell.level)
+            end
             (@nref $N children i) = Tree(cell, cell.level + 1, pos, fill(DummyFace{$N,0}(), $N, 2), fill(DummyTree{$N}(), Tuple(2*ones(Int, $N))), state(pos))
         end
     end
