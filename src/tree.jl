@@ -126,18 +126,22 @@ end
 
             @nexprs $N d -> begin
                 # Half of the faces are siblings
-                # TODO for half of the faces we dont need to construct a new Face
-                child.faces[d,other_side(i_d)] = Face{N,d,other_side(i_d)}(child, (@nref $N children k -> k == d ? other_side(i_d) : i_k))
+                if i_d == 2
+                    other_child = (@nref $N children k -> k == d ? other_side(i_d) : i_k)
+                    child.faces[d,other_side(i_d)] = other_child.faces[d,i_d]
+                else
+                    child.faces[d,other_side(i_d)] = Face{N,d,other_side(i_d)}(child, (@nref $N children k -> k == d ? other_side(i_d) : i_k))
+                end
 
                 # The other half aren't
                 if initialized(cell.faces[d,i_d])
                     neighbour_parent = cell.faces[d,i_d].cells[i_d]
                     if !initialized(neighbour_parent)
-                        # Neighbour lies outside of domain
+                        # Neighbour lies outside of domain (at_boundary)
                         face = Face{N,d,i_d}(child, DummyTree{N}())
                     else
                         if active(neighbour_parent)
-                            # Neighbouring parent has no children (at boundary)
+                            # Neighbouring parent has no children (at_refinement)
                             if cell.level == neighbour_parent.level
                                 neighbour = neighbour_parent
                             else
@@ -147,15 +151,14 @@ end
                             end
                             face = Face{N,d,i_d}(child, neighbour)
                         else
-                            # If neighbouring parent has children, then take neighbouring child
+                            # If neighbouring parent has children, then take neighbouring child (regular)
                             neighbour_children = neighbour_parent.children
                             neighbour = (@nref $N neighbour_children k -> k == d ? other_side(i_d) : i_k)
 
                             face = Face{N,d,other_side(i_d)}(neighbour, child)
 
                             # Also update the faces of the neighbour (only when they are of equal level)
-                            neighbour_faces = neighbour.faces
-                            neighbour_faces[d,other_side(i_d)] = face
+                            neighbour.faces[d,other_side(i_d)] = face
                         end
                     end
                     child.faces[d,i_d] = face
