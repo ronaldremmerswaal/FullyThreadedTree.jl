@@ -13,7 +13,6 @@ module FullyThreadedTree
            ordinary,
            active
 
-
     include("tree.jl")
 
     export Tree,
@@ -31,7 +30,10 @@ module FullyThreadedTree
            length,
            cells,
            active_cells,
-           parents_of_active_cell
+           parents_of_active_cell,
+           boundary_faces,
+           refinement_faces,
+           ordinary_faces
 
 
     include("tools.jl")

@@ -20,3 +20,5 @@ Face(cell::AbstractTree{N}, other_cell::AbstractTree{N}, ::Val{D}, ::Val{1}) whe
 
 @inline initialized(face::AbstractFace) = false
 @inline initialized(face::Face) = true
+
+@inline level(face::Face) = ordinary(face) ? max(face.cells[1].level, face.cells[2].level) : (initialized(face.cells[1]) ? face.cells[1].level : face.cells[2].level)

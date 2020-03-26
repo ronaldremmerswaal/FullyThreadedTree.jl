@@ -110,7 +110,7 @@ end
 # function initialize_children!(cell::Tree{N}, state::Function) where N
 #     for i=1:2, j=1:2
 #         pos = cell.position + (Float64.([i, j]) .- 1.5) / (2 << cell.level)
-#         cell.children[i,j] = Tree(cell, cell.level + 1, pos, fill(DummyTree{N}(), 2, 2), fill(DummyTree{N}(), 2, 2), state(pos))
+#         cell.children[i,j] = Tree(cell, cell.level + 1, pos, fill(DummyFace{N,0}(), 2, 2), fill(DummyTree{N}(), 2, 2), state(pos))
 #     end
 # end
 
@@ -129,9 +129,12 @@ end
                 # The other half aren't
                 if initialized(cell.faces[d,i_d])
                     neighbour_parent = cell.faces[d,i_d].cells[i_d]
-                    if initialized(neighbour_parent)
+                    if !initialized(neighbour_parent)
+                        # Neighbour lies outside of domain
+                        face = Face(child, DummyTree{N}(), Val(d), Val(i_d))
+                    else
                         if active(neighbour_parent)
-                            # Neighbouring parent has no children
+                            # Neighbouring parent has no children (at boundary)
                             if cell.level == neighbour_parent.level
                                 neighbour = neighbour_parent
                             else
@@ -151,63 +154,10 @@ end
                             neighbour_faces = neighbour.faces
                             neighbour_faces[d,other_side(i_d)] = face
                         end
-                        child.faces[d,i_d] = face
                     end
+                    child.faces[d,i_d] = face
                 end
             end
         end
     end
 end
-
-# function set_faces_of_children!(cell::Tree, state::Function)
-#     for i=1:2, j=1:2
-#         # TODO loop over direction
-#
-#         # Half of the faces are siblings
-#         cell.children[i,j].faces[1,3-i] = cell.children[3-i,j]
-#         cell.children[i,j].faces[2,3-j] = cell.children[i,3-j]
-#
-#         # The other half aren't
-#         neighbour_parent = cell.faces[1,i]
-#         if initialized(neighbour_parent)
-#             if active(neighbour_parent)
-#                 # Neighbouring parent has no children
-#                 if cell.level == neighbour_parent.level
-#                     neighbour = neighbour_parent
-#                 else
-#                     # Ensure that different in refined level is at most one between neighbouring cells
-#                     refine!(neighbour_parent, state)
-#                     neighbour = cell.faces[1,i]
-#                 end
-#             else
-#                 # If neighbouring parent has children, then take neighbouring child
-#                 neighbour = neighbour_parent.children[3-i,j]
-#
-#                 # Also update the faces of the neighbour (only when they are of equal level)
-#                 neighbour_parent.children[3-i,j].faces[1,3-i] = cell.children[i,j]
-#             end
-#             cell.children[i,j].faces[1,i] = neighbour
-#         end
-#
-#         neighbour_parent = cell.faces[2,j]
-#         if initialized(neighbour_parent)
-#             if active(neighbour_parent)
-#                 # Neighbouring parent has no children
-#                 if cell.level == neighbour_parent.level
-#                     neighbour = neighbour_parent
-#                 else
-#                     # Ensure that different in refined level is at most one between neighbouring cells
-#                     refine!(neighbour_parent, state)
-#                     neighbour = cell.faces[2,j]
-#                 end
-#             else
-#                 # If neighbouring parent has children, then take neighbouring child
-#                 neighbour = neighbour_parent.children[i,3-j]
-#
-#                 # Also update the faces of the neighbour (only when they are of equal level)
-#                 neighbour_parent.children[i,3-j].faces[2,3-j] = cell.children[i,j]
-#             end
-#             cell.children[i,j].faces[2,j] = neighbour
-#         end
-#     end
-# end
