@@ -11,7 +11,7 @@ struct Tree{N} <: AbstractTree{N}
 end
 
 Tree(parent, level, position, faces, children, state) = Tree{length(position)}(parent, level, position, faces, children, state)
-function Tree(position; state::Function=x->0., periodic::Vector{Bool} = fill(false, length(position)))
+function Tree(position; state::Function=x->nothing, periodic::Vector{Bool} = fill(false, length(position)))
     N = length(position)
     tree = Tree(DummyTree{N}(), 0, position, fill(DummyFace{N,0}(), N, 2), fill(DummyTree{N}(), Tuple(2*ones(Int, N))), state(position))
     for dir=1:N, side=1:2
@@ -31,7 +31,7 @@ end
 @inline other_side(side) = 3 - side
 
 # Refine a single leaf (graded)
-function refine!(cell::Tree, state::Function=x->0.; recurse=false)
+function refine!(cell::Tree, state::Function=x->nothing; recurse=false)
     if active(cell)
         # Setup leaf children
         initialize_children!(cell, state)
@@ -49,7 +49,7 @@ function refine!(cell::Tree, state::Function=x->0.; recurse=false)
 end
 
 # Refine a list of active_cells
-function refine!(cells::Vector{Tree}, state::Function=x->0.; recurse=false, issorted=false)
+function refine!(cells::Vector{Tree}, state::Function=x->nothing; recurse=false, issorted=false)
 
     if !issorted
         # Order cells in increasing level
