@@ -14,18 +14,18 @@ struct Tree{D} <: AbstractTree{D}
 end
 
 Tree(parent, level, position, neighbours, children, state) = Tree{length(position)}(parent, level, position, neighbours, children, state)
+function Tree(position, state::Function=x->0.)
+    D = length(position)
+    return Tree(DummyTree{D}(), 0, position, fill(DummyTree{D}(), D, 2), fill(DummyTree{D}(), Tuple(2*ones(Int, D))), state(position))
+end
 
 @inline isleaf(cell) = !isa(cell.children[1], Tree)
 @inline initialized(cell) = isa(cell, Tree)
 @inline isleafparent(cell) = !isleaf(cell) && isleaf(cell.children[1])
 
-function initialize_tree(position, state::Function=x->0.)
-    D = length(position)
-    return Tree(DummyTree{D}(), 0, position, fill(DummyTree{D}(), D, 2), fill(DummyTree{D}(), Tuple(2*ones(Int, D))), state(position))
-end
 
 # Refine a single leaf (graded)
-function refine!(cell::Tree, state::Function=x->0.; recurse=false)
+function refine!(cell::Tree; state::Function=x->0., recurse=false)
     if isleaf(cell)
         # Setup leaf children
         initialize_children!(cell, state)
@@ -35,22 +35,21 @@ function refine!(cell::Tree, state::Function=x->0.; recurse=false)
 
         # NB the neighbouring neighbours of equal level are updated in set_neighbours_of_children!
     elseif recurse
-        for child ∈ cell.children
-            refine!(child, state, recurse=true)
-        end
+        refine!(cell.children, state, recurse=true, issorted=true)
     end
 
 end
 
 # Refine a list of leaves
-function refine!(cells::Vector{Tree}, state::Function=x->0.; recurse=false)
+function refine!(cells::Vector{Tree}; state::Function=x->0., recurse=false, issorted=false)
 
-    # Order cells in increasing level
-    levels = [cell.level for cell ∈ cells]
-    cells = cells[sortperm(levels)]
+    if !issorted
+        # Order cells in increasing level
+        levels = [cell.level for cell ∈ cells]
+        cells = cells[sortperm(levels)]
+    end
 
     for cell ∈ cells
-        # NB Due to graded refinement a cell may already be refined
         refine!(cell, state, recurse=recurse)
     end
 end
@@ -74,10 +73,12 @@ function coarsen!(cell::Tree{D}) where D
 
 end
 
-function coarsen!(cells::Vector{Tree})
-    # Order cells in decreasing level (to ensure that graded noncoarsening is not an issue)
-    levels = [cell.level for cell ∈ cells]
-    cells = cells[sortperm(levels, rev=true)]
+function coarsen!(cells::Vector{Tree}; issorted=false)
+    if !issorted
+        # Order cells in decreasing level (to ensure that graded noncoarsening is not an issue)
+        levels = [cell.level for cell ∈ cells]
+        cells = cells[sortperm(levels, rev=true)]
+    end
 
     for cell ∈ cells
         coarsen!(cell)
