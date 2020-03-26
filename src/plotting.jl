@@ -17,26 +17,31 @@ function plot(tree::Tree{2})
         max_level = max(max_level, cell.level)
     end
     # plot(X, Y, legend=false, seriestype=:shape, fill_z=Z, linewidth=2. / (1 << max_level))
-    plot(X, Y, legend=false, seriestype=:shape, linewidth=2. / (1 << max_level))#, fill_z=Z
+    plot(X, Y, legend=false, seriestype = :shape, linewidth = 4. / (1 << max_level))#, fill_z=Z
 
-
+    max_node_level = 5
     X = Vector()
     Y = Vector()
     for cell ∈ active_cells(tree)
-        pos = centroid(cell)
-        push!(X, pos[1])
-        push!(Y, pos[2])
+        if cell.level < max_node_level
+            pos = centroid(cell)
+            push!(X, pos[1])
+            push!(Y, pos[2])
+        end
     end
 
-    plot!(X, Y, seriestype=:scatter, markersize = 20. /  (1 << max_level), marker=:circle)
+    plot!(X, Y, seriestype = :scatter, markersize = 20. /  (1 << min(max_node_level, max_level)), markerstrokewidth = 4. /  (1 << min(max_node_level, max_level)), marker=:circle)
 
     X = Vector()
     Y = Vector()
     for face ∈ active_faces(tree)
-        pos = centroid(face)
-        push!(X, pos[1])
-        push!(Y, pos[2])
+        if level(face) < max_node_level
+            pos = centroid(face)
+            push!(X, pos[1])
+            push!(Y, pos[2])
+        end
     end
-    plot!(X, Y, seriestype=:scatter, markersize = 20. /  (1 << max_level), marker=:square)
+    plot!(X, Y, seriestype = :scatter, markersize = 20. /  (1 << min(max_node_level, max_level)), markerstrokewidth = 4. /  (1 << min(max_node_level, max_level)), marker=:square)
 
+    return current()
 end
