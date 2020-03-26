@@ -6,11 +6,11 @@ error_tolerance = 1E-2
 R = pi / 12.
 
 # Define a smooth function which has a sharp gradient at a circle
-flower(x) = x[1]^2 + x[2]^2 - R^2 * (1 + 0.25 * cos(5 * atan(x[2], x[1]) + 1))^2
+flower(x) = sum(x.^2) - R^2 * (1 + 0.25 * cos(5 * atan(x[end], x[1]) + 1))^2
 shape(x) = tanh(32 * pi * flower(x))
 
-function adaptive_refinement(fun::Function, max_level::Int, error_tolerance; print_table::Bool=false)
-    tree = Tree([0., 0.], state=fun)
+function adaptive_refinement(fun::Function, max_level::Int, error_tolerance; print_table::Bool = false, dim::Int = 2)
+    tree = Tree(zeros(dim),state=fun)
     refine!(tree, fun)
 
     if print_table
@@ -29,25 +29,26 @@ function adaptive_refinement(fun::Function, max_level::Int, error_tolerance; pri
             push!(nr_marked_cells, 0)
         end
         for cell ∈ parents_of_active_cell(tree)
-            error_estimate = abs(cell.state - sum([child.state for child ∈ cell.children]) / 4)
+            error_estimate = abs(cell.state - sum([child.state for child ∈ cell.children]) / (1<<dim))
             if print_table max_error[end] = max(error_estimate, max_error[end]) end
             if error_estimate > error_tolerance
                 if print_table  nr_marked_cells[end] += 4 end
                 push!(marked, cell)
             end
         end
+
+
+        refine!(marked, fun, recurse=true)
         if print_table
             push!(integral, integrate(tree))
             push!(nr_of_cells, length(cells(tree)))
             push!(nr_of_active_cells, length(active_cells(tree)))
         end
-
+        
         if length(marked) == 0
             max_level = level
             break
         end
-
-        refine!(marked, fun, recurse=true)
     end
 
     if print_table
