@@ -10,7 +10,7 @@ module FullyThreadedTree
            cells,
            at_boundary,
            at_refinement,
-           ordinary,
+           regular,
            active
 
     include("tree.jl")
@@ -39,9 +39,9 @@ module FullyThreadedTree
     include("tools.jl")
 
     export volume,
-           first_moment,
+           centroid,
            integrate,
-           cell_volume,
+           volume,
            levels
 
     include("plotting.jl")

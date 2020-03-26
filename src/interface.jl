@@ -117,8 +117,8 @@ function find_next_face!(face_indices::Vector{Int}, cell_indices::Vector{Int}, c
     if face_indices[2] == 1
         # Go to right hand side
         face_indices[2] += 1
-        if ordinary(cell.faces[face_indices[1],face_indices[2]])
-            # but only if face is not ordinary, otherwise go to next dimension
+        if regular(cell.faces[face_indices[1],face_indices[2]])
+            # but only if face is not regular, otherwise go to next dimension
             face_indices[2] = 1
             face_indices[1] += 1
         end
@@ -143,7 +143,7 @@ boundary_faces(tree::Tree, lvl::Int) = (tree.faces[1], face -> at_boundary(face)
 refinement_faces(tree::Tree) = (tree.faces[1], at_refinement)
 refinement_faces(tree::Tree, lvl::Int) = (tree.faces[1], face -> at_refinement(face) && level(face) == lvl)
 ordinary_faces(tree::Tree) = (tree.faces[1], at_ordinary)
-ordinary_faces(tree::Tree, lvl::Int) = (tree.faces[1], face -> ordinary(face) && level(face) == lvl)
+ordinary_faces(tree::Tree, lvl::Int) = (tree.faces[1], face -> regular(face) && level(face) == lvl)
 function Base.length(tuple::Tuple{Face, Function})
     count = 0
     for cell ∈ tuple

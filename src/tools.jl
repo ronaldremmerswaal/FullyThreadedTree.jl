@@ -1,23 +1,7 @@
-function volume(tree::Tree)
-    vol = 0.
-    for leaf ∈ active_cells(tree)
-        vol += cell_volume(leaf)
-    end
-    return vol
-end
-
-function first_moment(tree::Tree)
-    moment = [0., 0.]
-    for leaf ∈ active_cells(tree)
-        moment += leaf.position .* cell_volume(leaf)
-    end
-    return moment
-end
-
 function integrate(tree::Tree)
     state = zero(tree.state)
     for leaf ∈ active_cells(tree)
-        state += leaf.state * cell_volume(leaf)
+        state += leaf.state * volume(leaf)
     end
     return state
 end
@@ -36,4 +20,18 @@ end
 #     poly[2] = cell.position[2] .+ [-1., -1., 1., 1., -1.] / (2 << (cell.level))
 # end
 
-@inline cell_volume(cell::Tree{N}) where N = 1. / (1 << (N*cell.level))
+@inline volume(cell::Tree{N}) where N = 1. / (1 << (N*cell.level))
+@inline centroid(cell::Tree) = cell.position
+
+
+@inline volume(face::Face{N}) where N = 1. / (1 << ((N-1)*level(face)))
+function centroid(face::Face{N,D}) where {N,D}
+    if initialized(face.cells[1])
+        position = copy(face.cells[1].position)
+        position[D] += 1. / (2<<face.cells[1].level)
+    else
+        position = copy(face.cells[2].position)
+        position[D] -= 1. / (2<<face.cells[2].level)
+    end
+    return position
+end
