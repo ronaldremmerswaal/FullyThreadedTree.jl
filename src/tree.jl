@@ -15,7 +15,7 @@ function Tree(position, state::Function=x->0.)
     N = length(position)
     tree = Tree(DummyTree{N}(), 0, position, fill(DummyFace{N,0}(), N, 2), fill(DummyTree{N}(), Tuple(2*ones(Int, N))), state(position))
     for dir=1:N, side=1:2
-        tree.faces[dir,side] = Face(tree, DummyTree{N}(), Val(dir), Val(side))
+        tree.faces[dir,side] = Face{N,dir,side}(tree, DummyTree{N}())
     end
     return tree
 end
@@ -28,7 +28,7 @@ end
 @inline parent_of_active(cell::AbstractTree) = false
 
 @inline other_side(side) = 3 - side
-@inline other_side(::Val{N}) where N = 3 - N
+# @inline other_side(::Val{N}) where N = 3 - N
 
 # Refine a single leaf (graded)
 function refine!(cell::Tree, state::Function=x->0.; recurse=false)
@@ -99,9 +99,9 @@ end
 @generated function initialize_children!(cell::Tree{N}, state::Function) where N
     quote
         children = cell.children
-        Base.Cartesian.@nloops $N i d->1:2 begin
-            pos = cell.position + (Float64.(collect(Base.Cartesian.@ntuple $N i)) .- 1.5) / (2 << cell.level)
-            (Base.Cartesian.@nref $N children i) = Tree(cell, cell.level + 1, pos, fill(DummyFace{$N,0}(), $N, 2), fill(DummyTree{$N}(), Tuple(2*ones(Int, $N))), state(pos))
+        @nloops $N i d->1:2 begin
+            pos = cell.position + (Float64.(collect(@ntuple $N i)) .- 1.5) / (2 << cell.level)
+            (@nref $N children i) = Tree(cell, cell.level + 1, pos, fill(DummyFace{$N,0}(), $N, 2), fill(DummyTree{$N}(), Tuple(2*ones(Int, $N))), state(pos))
         end
     end
 end
@@ -119,20 +119,20 @@ end
 @generated function set_faces_of_children!(cell::Tree{N}, state::Function) where N
     quote
         children = cell.children
-        Base.Cartesian.@nloops $N i d->1:2 begin
-            child = (Base.Cartesian.@nref $N children i)
+        @nloops $N i d->1:2 begin
+            child = (@nref $N children i)
 
-            Base.Cartesian.@nexprs $N d -> begin
+            @nexprs $N d -> begin
                 # Half of the faces are siblings
                 # TODO for half of the faces we dont need to construct a new Face
-                child.faces[d,other_side(i_d)] = Face(child, (Base.Cartesian.@nref $N children k -> k == d ? other_side(i_d) : i_k), Val(d), Val(other_side(i_d)))
+                child.faces[d,other_side(i_d)] = Face{N,d,other_side(i_d)}(child, (@nref $N children k -> k == d ? other_side(i_d) : i_k))
 
                 # The other half aren't
                 if initialized(cell.faces[d,i_d])
                     neighbour_parent = cell.faces[d,i_d].cells[i_d]
                     if !initialized(neighbour_parent)
                         # Neighbour lies outside of domain
-                        face = Face(child, DummyTree{N}(), Val(d), Val(i_d))
+                        face = Face{N,d,i_d}(child, DummyTree{N}())
                     else
                         if active(neighbour_parent)
                             # Neighbouring parent has no children (at boundary)
@@ -143,13 +143,13 @@ end
                                 refine!(neighbour_parent, state)
                                 neighbour = cell.faces[d,i_d].cells[i_d]
                             end
-                            face = Face(child, neighbour, Val(d), Val(i_d))
+                            face = Face{N,d,i_d}(child, neighbour)
                         else
                             # If neighbouring parent has children, then take neighbouring child
                             neighbour_children = neighbour_parent.children
-                            neighbour = (Base.Cartesian.@nref $N neighbour_children k -> k == d ? other_side(i_d) : i_k)
+                            neighbour = (@nref $N neighbour_children k -> k == d ? other_side(i_d) : i_k)
 
-                            face = Face(neighbour, child, Val(d), Val(other_side(i_d)))
+                            face = Face{N,d,other_side(i_d)}(neighbour, child)
 
                             # Also update the faces of the neighbour (only when they are of equal level)
                             neighbour_faces = neighbour.faces

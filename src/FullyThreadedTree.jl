@@ -1,5 +1,7 @@
 module FullyThreadedTree
 
+    using Base.Cartesian
+    
     abstract type AbstractTree{N} end
     abstract type AbstractFace{N,D} end
 
