@@ -7,11 +7,12 @@ function Base.iterate(tuple::Tuple{Tree, Function}, state=initialized(tuple[1]) 
     filter = tuple[2]
 
     next_element = find_next_element(element, indices)
-    if !filter(element)
-        return iterate(tuple, (next_element, count, indices))
-    else
-        return (element, (next_element, count + 1, indices))
+    while !filter(element)
+        element = next_element
+        if element == nothing return nothing end
+        next_element = find_next_element(element, indices)
     end
+    return (element, (next_element, count + 1, indices))
 end
 
 # indices[l] yields the child index at level l in the following sense
@@ -61,9 +62,12 @@ function Base.show(io::IO, tree::Tree)
     end
 end
 
-cells(tree::Tree) = (tree, x->true)
+cells(tree::Tree) = (tree, x -> true)
+cells(tree::Tree, level::Int) = (tree, x -> x.level == level)
 leaves(tree::Tree) = (tree, isleaf)
+leaves(tree::Tree, level::Int) = (tree, x -> isleaf(x) && x.level == level)
 leafparents(tree::Tree) = (tree, isleafparent)
+leafparents(tree::Tree, level::Int) = (tree, x -> isleafparent(x) && x.level == level)
 
 function Base.length(tuple::Tuple{Tree, Function})
     count = 0

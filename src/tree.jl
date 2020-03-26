@@ -20,7 +20,8 @@ function Tree(position, state::Function=x->0.)
 end
 
 @inline isleaf(cell::Tree) = !isa(cell.children[1], Tree)
-@inline initialized(cell::AbstractTree) = isa(cell, Tree)
+@inline initialized(cell::Tree) = true
+@inline initialized(cell::AbstractTree) = false
 @inline isleafparent(cell::Tree) = !isleaf(cell) && isleaf(cell.children[1])
 
 

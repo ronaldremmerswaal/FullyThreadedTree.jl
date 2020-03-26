@@ -7,7 +7,8 @@ module FullyThreadedTree
            refine!,
            coarsen!,
            isleaf,
-           isleafparent
+           isleafparent,
+           initialized
 
     include("interface.jl")
 
