@@ -22,22 +22,6 @@ function integrate(tree::Tree)
     return state
 end
 
-function nr_leaves(tree::Tree)
-    nr = 0
-    for leaf ∈ leaves(tree)
-        nr += 1
-    end
-    return nr
-end
-
-function nr_cells(tree::Tree)
-    nr = 0
-    for cell ∈ cells(tree)
-        nr += 1
-    end
-    return nr
-end
-
 function levels(tree::Tree)
     level = 0
     for cell ∈ cells(tree)

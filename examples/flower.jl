@@ -16,32 +16,26 @@ function adaptive_refinement!(tree, fun, max_level, error_tolerance)
 
     max_error = Vector()
     integral = Vector()
-    nr_cells = Vector()
-    nr_leaf_cells = Vector()
+    nr_of_cells = Vector()
+    nr_of_leaves = Vector()
     nr_marked_cells = Vector()
 
     for level = 1:max_level
         marked = Vector{Tree}()
 
         push!(max_error, 0.)
-        push!(nr_cells, 0)
-        push!(nr_leaf_cells, 0)
         push!(nr_marked_cells, 0)
-        for cell ∈ cells(tree)
-            nr_cells[end] += 1
-
-            if isleaf(cell) nr_leaf_cells[end] += 1 end
-            if isleafparent(cell)
-                error_estimate = abs(cell.state - sum([child.state for child ∈ cell.children]) / 4)
-                max_error[end] = max(error_estimate, max_error[end])
-                if error_estimate > error_tolerance
-                    nr_marked_cells[end] += 4
-                    push!(marked, cell)
-                end
+        for cell ∈ leafparents(tree)
+            error_estimate = abs(cell.state - sum([child.state for child ∈ cell.children]) / 4)
+            max_error[end] = max(error_estimate, max_error[end])
+            if error_estimate > error_tolerance
+                nr_marked_cells[end] += 4
+                push!(marked, cell)
             end
-
         end
         push!(integral, integrate(tree))
+        push!(nr_of_cells, length(cells(tree)))
+        push!(nr_of_leaves, length(leaves(tree)))
 
         if length(marked) == 0
             max_level = level
@@ -52,7 +46,7 @@ function adaptive_refinement!(tree, fun, max_level, error_tolerance)
     end
 
     formatter = Dict(0 => (v, i) -> typeof(v) == Int ? Int(v) : round(v; digits=5))
-    pretty_table(hcat(1 : max_level, nr_leaf_cells, nr_cells, nr_marked_cells, max_error, integral), ["level", "# leaves", "# cells", "# marked", "error", "integral"], tf = markdown, formatter = formatter)
+    pretty_table(hcat(1 : max_level, nr_of_leaves, nr_of_cells, nr_marked_cells, max_error, integral), ["level", "# leaves", "# cells", "# marked", "error", "integral"], tf = markdown, formatter = formatter)
 
 end
 

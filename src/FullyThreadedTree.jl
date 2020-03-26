@@ -30,8 +30,6 @@ module FullyThreadedTree
     export volume,
            first_moment,
            integrate,
-           nr_cells,
-           nr_leaves,
            cell_volume,
            levels
 

@@ -56,7 +56,7 @@ function Base.show(io::IO, tree::Tree)
             print(io, "on level $(tree.level) ")
         end
         if !isleaf(tree) && !compact
-            print(io, "with $(levels(tree)) levels and $(nr_leaves(tree)) leaves out of $(nr_cells(tree)) cells")
+            print(io, "with $(levels(tree)) levels and $(length(leaves(tree))) leaves out of $(length(cells(tree))) cells")
         end
     end
 end
@@ -64,3 +64,11 @@ end
 cells(tree::Tree) = (tree, x->true)
 leaves(tree::Tree) = (tree, isleaf)
 leafparents(tree::Tree) = (tree, isleafparent)
+
+function Base.length(tuple::Tuple{Tree, Function})
+    count = 0
+    for cell ∈ tuple
+        count += 1
+    end
+    return count
+end
