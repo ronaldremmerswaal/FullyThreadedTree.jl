@@ -124,6 +124,7 @@ end
 
             Base.Cartesian.@nexprs $N d -> begin
                 # Half of the faces are siblings
+                # TODO for half of the faces we dont need to construct a new Face
                 child.faces[d,other_side(i_d)] = Face(child, (Base.Cartesian.@nref $N children k -> k == d ? other_side(i_d) : i_k), Val(d), Val(other_side(i_d)))
 
                 # The other half aren't

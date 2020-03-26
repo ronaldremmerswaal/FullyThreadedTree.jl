@@ -65,6 +65,7 @@ function Base.show(io::IO, tree::Tree)
         if tree.level == 0
             print(io, "root ")
         else
+            if active(tree) print(io, "leaf ") end
             print(io, "on level $(tree.level) ")
         end
         if !active(tree) && !compact
@@ -142,8 +143,10 @@ boundary_faces(tree::Tree) = (tree.faces[1], at_boundary)
 boundary_faces(tree::Tree, lvl::Int) = (tree.faces[1], face -> at_boundary(face) && level(face) == lvl)
 refinement_faces(tree::Tree) = (tree.faces[1], at_refinement)
 refinement_faces(tree::Tree, lvl::Int) = (tree.faces[1], face -> at_refinement(face) && level(face) == lvl)
-ordinary_faces(tree::Tree) = (tree.faces[1], at_ordinary)
-ordinary_faces(tree::Tree, lvl::Int) = (tree.faces[1], face -> regular(face) && level(face) == lvl)
+regular_faces(tree::Tree) = (tree.faces[1], regular)
+regular_faces(tree::Tree, lvl::Int) = (tree.faces[1], face -> regular(face) && level(face) == lvl)
+active_faces(tree::Tree) = (tree.faces[1], active)
+active_faces(tree::Tree, lvl::Int) = (tree.faces[1], face -> active(face) && level(face) == lvl)
 function Base.length(tuple::Tuple{Face, Function})
     count = 0
     for cell ∈ tuple

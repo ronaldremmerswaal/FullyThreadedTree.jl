@@ -15,7 +15,7 @@ Face(cell::AbstractTree{N}, other_cell::AbstractTree{N}, ::Val{D}, ::Val{1}) whe
 @inline regular(face::Face) = all(initialized.(face.cells)) && face.cells[1].level == face.cells[2].level
 @inline regular(face::AbstractFace) = false
 
-@inline active(face::Face) = at_boundary(face) || all(active.(face.cells))
+@inline active(face::Face) = all(active.(face.cells)) || (at_boundary(face) && count(active.(face.cells)) == 1)
 @inline active(face::AbstractFace) = false
 
 @inline initialized(face::AbstractFace) = false

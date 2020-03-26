@@ -11,7 +11,8 @@ module FullyThreadedTree
            at_boundary,
            at_refinement,
            regular,
-           active
+           active,
+           level
 
     include("tree.jl")
 
@@ -33,7 +34,8 @@ module FullyThreadedTree
            parents_of_active_cell,
            boundary_faces,
            refinement_faces,
-           ordinary_faces
+           regular_faces,
+           active_faces
 
 
     include("tools.jl")
@@ -41,6 +43,8 @@ module FullyThreadedTree
     export volume,
            centroid,
            integrate,
+           cell_distance,
+           area,
            volume,
            levels
 

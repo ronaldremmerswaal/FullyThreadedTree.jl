@@ -24,7 +24,7 @@ end
 @inline centroid(cell::Tree) = cell.position
 
 
-@inline volume(face::Face{N}) where N = 1. / (1 << ((N-1)*level(face)))
+@inline area(face::Face{N}) where N = 1. / (1 << ((N-1)*level(face)))
 function centroid(face::Face{N,D}) where {N,D}
     if initialized(face.cells[1])
         position = copy(face.cells[1].position)
@@ -35,3 +35,16 @@ function centroid(face::Face{N,D}) where {N,D}
     end
     return position
 end
+
+function cell_distance(face::Face)
+    dist = 0.0
+    if initialized(face.cells[1])
+        dist += 1. / (2<<face.cells[1].level)
+    end
+    if initialized(face.cells[2])
+        dist += 1. / (2<<face.cells[2].level)
+    end
+    return dist
+end
+
+@inline volume(face::Face) = cell_distance(face) * area(face)
