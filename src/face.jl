@@ -21,4 +21,4 @@ Face{N,D,1}(cell::AbstractTree{N}, other_cell::AbstractTree{N}) where {N,D} = Fa
 @inline initialized(face::AbstractFace) = false
 @inline initialized(face::Face) = true
 
-@inline level(face::Face) = regular(face) ? max(face.cells[1].level, face.cells[2].level) : (initialized(face.cells[1]) ? face.cells[1].level : face.cells[2].level)
+@inline level(face::Face) = (initialized(face.cells[1]) && initialized(face.cells[2])) ? max(face.cells[1].level, face.cells[2].level) : (initialized(face.cells[1]) ? face.cells[1].level : face.cells[2].level)
