@@ -21,6 +21,9 @@ function Tree(position; state::Function=x->nothing, periodic::Vector{Bool} = fil
     return tree
 end
 
+# @inline level(cell::Tree{N, L}) where {N, L} = L
+@inline level(cell::Tree) = cell.level
+
 @inline active(cell::Tree) = !initialized(cell.children[1])
 @inline active(cell::AbstractTree) = false
 @inline initialized(cell::Tree) = true
@@ -31,7 +34,7 @@ end
 @inline other_side(side) = 3 - side
 
 # Refine a single leaf (graded)
-function refine!(cell::Tree{N}; state::Function = x -> nothing, recurse = false) where N
+function refine!(cell::Tree; state::Function = x -> nothing, recurse = false)
     if active(cell)
         # Setup leaf children
         initialize_children!(cell, state)
@@ -49,11 +52,11 @@ function refine!(cell::Tree{N}; state::Function = x -> nothing, recurse = false)
 end
 
 # Refine a list of active_cells
-function refine!(cells::Vector{Tree{N}}; state::Function = x -> nothing, recurse = false, issorted = false) where N
+function refine!(cells::Vector{Tree}; state::Function = x -> nothing, recurse = false, issorted = false)
 
     if !issorted
         # Order cells in increasing level
-        levels = [cell.level for cell ∈ cells]
+        levels = [level(cell) for cell ∈ cells]
         cells = cells[sortperm(levels)]
     end
 
@@ -77,7 +80,7 @@ function coarsen!(cell::Tree{N}) where N
 
     # Update neighbour pointers (same level only)
     for dir=1:N, side=1:2
-        if initialized(cell.faces[dir,side]) && cell.faces[dir,side].level == cell.level + 1
+        if initialized(cell.faces[dir,side]) && cell.faces[dir,side].level == level(cell) + 1
             cell.faces[dir,side].faces[dir,other_side(side)] = cell
         end
     end
@@ -87,7 +90,7 @@ end
 function coarsen!(cells::Vector{Tree}; issorted=false)
     if !issorted
         # Order cells in decreasing level (to ensure that graded noncoarsening is not an issue)
-        levels = [cell.level for cell ∈ cells]
+        levels = [level(cell) for cell ∈ cells]
         cells = cells[sortperm(levels, rev=true)]
     end
 
@@ -102,9 +105,9 @@ end
         @nloops $N i d->1:2 begin
             pos = copy(cell.position)
             @nexprs $N d -> begin
-                pos[d] += (Float64(i_d) .- 1.5) / (2 << cell.level)
+                pos[d] += (Float64(i_d) .- 1.5) / (2 << level(cell))
             end
-            (@nref $N children i) = Tree(cell, cell.level + 1, pos, fill(DummyFace{$N,0}(), $N, 2), fill(DummyTree{$N}(), Tuple(2*ones(Int, $N))), state(pos))
+            (@nref $N children i) = Tree(cell, level(cell) + 1, pos, fill(DummyFace{$N,0}(), $N, 2), fill(DummyTree{$N}(), Tuple(2*ones(Int, $N))), state(pos))
         end
     end
 end
@@ -112,13 +115,13 @@ end
 # NB this is the N-dimensional variant of
 # function initialize_children!(cell::Tree{N}, state::Function) where N
 #     for i=1:2, j=1:2
-#         pos = cell.position + (Float64.([i, j]) .- 1.5) / (2 << cell.level)
-#         cell.children[i,j] = Tree(cell, cell.level + 1, pos, fill(DummyFace{N,0}(), 2, 2), fill(DummyTree{N}(), 2, 2), state(pos))
+#         pos = cell.position + (Float64.([i, j]) .- 1.5) / (2 << level(cell))
+#         cell.children[i,j] = Tree(cell, level(cell) + 1, pos, fill(DummyFace{N,0}(), 2, 2), fill(DummyTree{N}(), 2, 2), state(pos))
 #     end
 # end
 
 # NB when this function is called, it is assumed that the faces are fully initialized
-# up untill and including level=cell.level
+# up untill and including level=level(cell)
 @generated function set_faces_of_children!(cell::Tree{N}, state::Function) where N
     quote
         children = cell.children
@@ -143,7 +146,7 @@ end
                     else
                         if active(neighbour_parent)
                             # Neighbouring parent has no children (at_refinement)
-                            if cell.level == neighbour_parent.level
+                            if level(cell) == level(neighbour_parent)
                                 neighbour = neighbour_parent
                             else
                                 # Ensure that difference in refined level is at most one between neighbouring cells

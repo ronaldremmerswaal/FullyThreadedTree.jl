@@ -10,7 +10,7 @@ function plot(tree::Tree{1})
         push!(X, cell.position[1])
         push!(Y, cell.state)
 
-        max_level = max(max_level, cell.level)
+        max_level = max(max_level, level(cell))
     end
 
     plot(X, Y, legend = false)
@@ -28,10 +28,10 @@ function plot(tree::Tree{2}; markers::Bool = false, max_marker_level::Int = 5, p
         append!(X, NaN)
         append!(Y, NaN)
 
-        append!(X, cell.position[1] .+ [-1., 1., 1., -1., -1.] / (2 << (cell.level)))
-        append!(Y, cell.position[2] .+ [-1., -1., 1., 1., -1.] / (2 << (cell.level)))
+        append!(X, cell.position[1] .+ [-1., 1., 1., -1., -1.] / (2 << (level(cell))))
+        append!(Y, cell.position[2] .+ [-1., -1., 1., 1., -1.] / (2 << (level(cell))))
 
-        max_level = max(max_level, cell.level)
+        max_level = max(max_level, level(cell))
     end
     linewidth0 = 4.
     linewidth = linewidth0 / (1 << max_level)
@@ -55,7 +55,7 @@ function plot(tree::Tree{2}; markers::Bool = false, max_marker_level::Int = 5, p
         X = Vector()
         Y = Vector()
         for cell ∈ active_cells(tree)
-            if cell.level < max_marker_level
+            if level(cell) < max_marker_level
                 pos = centroid(cell)
                 push!(X, pos[1])
                 push!(Y, pos[2])
@@ -94,19 +94,19 @@ function plot(tree::Tree{3}; markers::Bool = false, max_marker_level::Int = 5, p
             append!(Y, NaN)
             append!(Z, NaN)
 
-            append!(X, cell.position[1] .+ xloop / (2 << (cell.level)))
-            append!(Y, cell.position[2] .+ yloop / (2 << (cell.level)))
-            append!(Z, cell.position[3] .+ -ones(5) / (2 << (cell.level)))
-            append!(X, cell.position[1] .+ xloop / (2 << (cell.level)))
-            append!(Y, cell.position[2] .+ yloop / (2 << (cell.level)))
-            append!(Z, cell.position[3] .+ ones(5) / (2 << (cell.level)))
+            append!(X, cell.position[1] .+ xloop / (2 << (level(cell))))
+            append!(Y, cell.position[2] .+ yloop / (2 << (level(cell))))
+            append!(Z, cell.position[3] .+ -ones(5) / (2 << (level(cell))))
+            append!(X, cell.position[1] .+ xloop / (2 << (level(cell))))
+            append!(Y, cell.position[2] .+ yloop / (2 << (level(cell))))
+            append!(Z, cell.position[3] .+ ones(5) / (2 << (level(cell))))
             for i=2:4
                 append!(X, NaN)
                 append!(Y, NaN)
                 append!(Z, NaN)
-                append!(X, cell.position[1] .+ [xloop[i], xloop[i]] / (2 << (cell.level)))
-                append!(Y, cell.position[2] .+ [yloop[i], yloop[i]] / (2 << (cell.level)))
-                append!(Z, cell.position[3] .+ [-1., 1.] / (2 << (cell.level)))
+                append!(X, cell.position[1] .+ [xloop[i], xloop[i]] / (2 << (level(cell))))
+                append!(Y, cell.position[2] .+ [yloop[i], yloop[i]] / (2 << (level(cell))))
+                append!(Z, cell.position[3] .+ [-1., 1.] / (2 << (level(cell))))
             end
         end
         plot(X, Y, Z, legend = false, color = :black, linewidth = linewidth)
@@ -133,7 +133,7 @@ function plot(tree::Tree{3}; markers::Bool = false, max_marker_level::Int = 5, p
         Y = Vector()
         Z = Vector()
         for cell ∈ active_cells(tree)
-            if cell.level < max_marker_level
+            if level(cell) < max_marker_level
                 pos = centroid(cell)
                 push!(X, pos[1])
                 push!(Y, pos[2])

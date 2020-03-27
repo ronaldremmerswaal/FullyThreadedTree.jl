@@ -13,9 +13,9 @@ Face{N,D,1}(cell::AbstractTree{N}, other_cell::AbstractTree{N}, state = nothing)
 
 @inline at_boundary(face::Face) = (initialized(face.cells[1]) && !initialized(face.cells[2])) || (initialized(face.cells[2]) && !initialized(face.cells[1]))
 @inline at_boundary(face::AbstractFace) = false
-@inline at_refinement(face::Face) = initialized(face.cells[1]) && initialized(face.cells[2]) && face.cells[1].level != face.cells[2].level
+@inline at_refinement(face::Face) = initialized(face.cells[1]) && initialized(face.cells[2]) && level(face.cells[1]) != level(face.cells[2])
 @inline at_refinement(face::AbstractFace) = false
-@inline regular(face::Face) = initialized(face.cells[1]) && initialized(face.cells[2]) && face.cells[1].level == face.cells[2].level
+@inline regular(face::Face) = initialized(face.cells[1]) && initialized(face.cells[2]) && level(face.cells[1]) == level(face.cells[2])
 @inline regular(face::AbstractFace) = false
 
 @inline active(face::Face) = (active(face.cells[1]) && active(face.cells[2])) || (at_boundary(face) && (active(face.cells[1]) || active(face.cells[2])))
@@ -24,4 +24,4 @@ Face{N,D,1}(cell::AbstractTree{N}, other_cell::AbstractTree{N}, state = nothing)
 @inline initialized(face::AbstractFace) = false
 @inline initialized(face::Face) = true
 
-@inline level(face::Face) = (initialized(face.cells[1]) && initialized(face.cells[2])) ? max(face.cells[1].level, face.cells[2].level) : (initialized(face.cells[1]) ? face.cells[1].level : face.cells[2].level)
+@inline level(face::Face) = (initialized(face.cells[1]) && initialized(face.cells[2])) ? max(level(face.cells[1]), level(face.cells[2])) : (initialized(face.cells[1]) ? level(face.cells[1]) : level(face.cells[2]))

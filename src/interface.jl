@@ -6,7 +6,7 @@ function Base.iterate(tuple::Tuple{Tree, Function, Int}, state = (tuple[1], 0, V
     if cell == nothing return nothing end
     tree, filter, max_level = tuple
 
-    cell, next_cell = find_next_cell!(cell, indices, filter, max_level)
+    cell, next_cell = find_next_filtered_cell!(cell, indices, filter, max_level)
     if cell == nothing
         return nothing
     else
@@ -15,12 +15,23 @@ function Base.iterate(tuple::Tuple{Tree, Function, Int}, state = (tuple[1], 0, V
 
 end
 
+function find_next_filtered_cell!(cell::Tree{N}, indices::Vector{Int}, filter::Function, max_level::Int) where N
+    next_cell = find_next_cell!(cell, indices, max_level)
+    while !filter(cell)
+        cell = next_cell
+        if cell == nothing break end
+        next_cell = find_next_cell!(cell, indices, max_level)
+    end
+
+    return cell, next_cell
+end
+
 # indices[l] yields the child index at level l in the following sense
 # cell = cell.parent.children[indices[end]]
 #         = cell.parent.parent.children[indices[end-1]].children[end]
 #         = ...
 function find_next_cell!(cell::Tree{N}, indices::Vector{Int}, max_level::Int) where N
-    if !active(cell) && cell.level < max_level
+    if !active(cell) && level(cell) < max_level
         # Depth first: go to higher level
         next_cell = cell.children[1]
         push!(indices, 1)
@@ -28,11 +39,11 @@ function find_next_cell!(cell::Tree{N}, indices::Vector{Int}, max_level::Int) wh
         next_cell = nothing
     else
         # Find sibling or sibling of parent (or grandparent etc.)
-        level = findlast(index -> index < 1<<N, indices)
-        if level == nothing
+        lvl = findlast(index -> index < 1<<N, indices)
+        if lvl == nothing
             next_cell = nothing
         else
-            nr_to_pop = length(indices) - level
+            nr_to_pop = length(indices) - lvl
             next_cell = cell
             for i=1:nr_to_pop
                 next_cell = next_cell.parent
@@ -46,27 +57,16 @@ function find_next_cell!(cell::Tree{N}, indices::Vector{Int}, max_level::Int) wh
     return next_cell
 end
 
-function find_next_cell!(cell::Tree{N}, indices::Vector{Int}, filter::Function, max_level::Int) where N
-    next_cell = find_next_cell!(cell, indices, max_level)
-    while !filter(cell)
-        cell = next_cell
-        if cell == nothing break end
-        next_cell = find_next_cell!(cell, indices, max_level)
-    end
-
-    return cell, next_cell
-end
-
 function Base.show(io::IO, tree::Tree)
     compact = get(io, :compact, false)
 
     print(io, "$(typeof(tree)) ")
     if initialized(tree)
-        if tree.level == 0
+        if level(tree) == 0
             print(io, "root ")
         else
             if active(tree) print(io, "leaf ") end
-            print(io, "on level $(tree.level) ")
+            print(io, "on level $(level(tree)) ")
         end
         if !active(tree) && !compact
             print(io, "with $(levels(tree)) levels and $(length(active_cells(tree))) active_cells out of $(length(cells(tree))) cells")
@@ -75,11 +75,11 @@ function Base.show(io::IO, tree::Tree)
 end
 
 cells(tree::Tree) = (tree, cell -> true, typemax(Int))
-cells(tree::Tree, level::Int) = (tree, cell -> cell.level == level, level)
+cells(tree::Tree, lvl::Int) = (tree, cell -> level(cell) == lvl, lvl)
 active_cells(tree::Tree) = (tree, active, typemax(Int))
-active_cells(tree::Tree, level::Int) = (tree, cell -> active(cell) && cell.level == level, level)
+active_cells(tree::Tree, lvl::Int) = (tree, cell -> active(cell) && level(cell) == lvl, lvl)
 parents_of_active_cell(tree::Tree) = (tree, parent_of_active, typemax(Int))
-parents_of_active_cell(tree::Tree, level::Int) = (tree, cell -> parent_of_active(cell) && cell.level == level, level)
+parents_of_active_cell(tree::Tree, lvl::Int) = (tree, cell -> parent_of_active(cell) && level(cell) == lvl, lvl)
 
 function Base.length(tuple::Tuple{Tree, Function, Int})
     count = 0

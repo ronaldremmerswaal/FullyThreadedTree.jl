@@ -1,9 +1,9 @@
 module FullyThreadedTree
 
     using Base.Cartesian
-    
+
     abstract type AbstractTree{N} end
-    abstract type AbstractFace{N,D} end
+    abstract type AbstractFace{N, D} end
 
     include("face.jl")
 
@@ -24,7 +24,8 @@ module FullyThreadedTree
            coarsen!,
            active,
            parent_of_active,
-           initialized
+           initialized,
+           level
 
     include("interface.jl")
 
