@@ -39,19 +39,14 @@ function find_next_cell!(cell::Tree{N}, indices::Vector{Int}, max_level::Int) wh
         next_cell = nothing
     else
         # Find sibling or sibling of parent (or grandparent etc.)
-        lvl = findlast(index -> index < 1<<N, indices)
-        if lvl == nothing
-            next_cell = nothing
-        else
-            nr_to_pop = length(indices) - lvl
-            next_cell = cell
-            for i=1:nr_to_pop
-                next_cell = next_cell.parent
-                pop!(indices)
-            end
-            indices[end] += 1
-            next_cell = next_cell.parent.children[indices[end]]
+        next_cell = cell
+        while indices[end] == 1<<N
+            next_cell = next_cell.parent
+            pop!(indices)
+            if isempty(indices) return nothing end
         end
+        indices[end] += 1
+        next_cell = next_cell.parent.children[indices[end]]
     end
 
     return next_cell

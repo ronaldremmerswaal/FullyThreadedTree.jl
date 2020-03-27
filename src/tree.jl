@@ -2,18 +2,21 @@ struct DummyTree{N} <: AbstractTree{N} end
 
 # A N-dimensional tree
 struct Tree{N} <: AbstractTree{N}
-    parent::AbstractTree{N}
+    parent::Tree{N}
     level::Int
     position::Vector
     faces::Array{Face{N}, 2}                # index1 = direction (x/y), index2 = side (left/right), ...
     children::Array{AbstractTree{N}, N}     # index1 = x-direction, index2 = y-direction, ...
     state
+
+    Tree{N}() where N = new()
+    Tree{N}(parent, level, position, faces, children, state) where N = new(parent, level, position, faces, children, state)
 end
 
 Tree(parent, level, position, faces, children, state) = Tree{length(position)}(parent, level, position, faces, children, state)
 function Tree(position; state::Function=x->nothing, periodic::Vector{Bool} = fill(false, length(position)))
     N = length(position)
-    tree = Tree(DummyTree{N}(), 0, position, fill(Face{N}(), N, 2), fill(DummyTree{N}(), Tuple(2*ones(Int, N))), state(position))
+    tree = Tree(Tree{N}(), 0, position, fill(Face{N}(), N, 2), fill(DummyTree{N}(), Tuple(2*ones(Int, N))), state(position))
     for dir=1:N, side=1:2
         neigh = periodic[dir] ? tree : DummyTree{N}()
         tree.faces[dir,side] = Face(tree, neigh, dir, side)
@@ -40,7 +43,7 @@ function refine!(cell::Tree; state::Function = x -> nothing, recurse = false)
         initialize_children!(cell.children, cell, state)
 
         # Set faces of children (may contain a call ro refine! due to graded refinement)
-        initialize_faces_of_children!(cell, state)
+        initialize_faces_of_children!(cell.children, cell, state)
 
         # NB the neighbouring faces of equal level are updated in initialize_faces_of_children!
     elseif recurse
@@ -79,7 +82,7 @@ function coarsen!(cell::Tree{N}) where N
     end
 
     # Update neighbour pointers (same level only)
-    for dir=1:N, side=1:2
+    @inbounds for dir=1:N, side=1:2
         if initialized(cell.faces[dir,side]) && cell.faces[dir,side].level == level(cell) + 1
             cell.faces[dir,side].faces[dir,other_side(side)] = cell
         end
@@ -101,7 +104,7 @@ end
 
 @generated function initialize_children!(children::Array{AbstractTree{N}, N}, parent::Tree{N}, state::Function) where N
     quote
-        @nloops $N i d->1:2 begin
+        @nloops $N i d->1:2 @inbounds begin
             pos = copy(parent.position)
             @nexprs $N d -> begin
                 pos[d] += (Float64(i_d) .- 1.5) / (2 << level(parent))
@@ -121,10 +124,9 @@ end
 
 # NB when this function is called, it is assumed that the faces are fully initialized
 # up untill and including level=level(cell)
-@generated function initialize_faces_of_children!(parent::Tree{N}, state::Function) where N
+@generated function initialize_faces_of_children!(children::Array{AbstractTree{N}, N}, parent::Tree{N}, state::Function) where N
     quote
-        children = parent.children
-        @nloops $N i d->1:2 begin
+        @nloops $N i d->1:2 @inbounds begin
             child = (@nref $N children i)
 
             @nexprs $N d -> begin
