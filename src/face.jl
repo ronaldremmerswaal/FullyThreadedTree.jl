@@ -9,7 +9,7 @@ end
 cells(face::Face) = face.cells
 
 # Initialize a face, here Val indicates the side (1 or 2) relative to cell of this face
-function Face{N}(cell::AbstractTree{N}, other_cell::AbstractTree{N}, face_direction, side; state = nothing) where N
+function Face(cell::AbstractTree{N}, other_cell::AbstractTree{N}, face_direction, side; state = nothing) where N
     side == 1 ? Face{N}((other_cell, cell), face_direction, state) : Face{N}((cell, other_cell), face_direction, state)
 end
 

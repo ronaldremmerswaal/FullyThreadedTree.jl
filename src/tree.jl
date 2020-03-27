@@ -16,7 +16,7 @@ function Tree(position; state::Function=x->nothing, periodic::Vector{Bool} = fil
     tree = Tree(DummyTree{N}(), 0, position, fill(DummyFace{N}(), N, 2), fill(DummyTree{N}(), Tuple(2*ones(Int, N))), state(position))
     for dir=1:N, side=1:2
         neigh = periodic[dir] ? tree : DummyTree{N}()
-        tree.faces[dir,side] = Face{N}(tree, neigh, dir, side)
+        tree.faces[dir,side] = Face(tree, neigh, dir, side)
     end
     return tree
 end
@@ -133,14 +133,14 @@ end
                     other_child = (@nref $N children k -> k == d ? other_side(i_d) : i_k)
                     child.faces[d,other_side(i_d)] = other_child.faces[d,i_d]
                 else
-                    child.faces[d,other_side(i_d)] = Face{N}(child, (@nref $N children k -> k == d ? other_side(i_d) : i_k), d, other_side(i_d))
+                    child.faces[d,other_side(i_d)] = Face(child, (@nref $N children k -> k == d ? other_side(i_d) : i_k), d, other_side(i_d))
                 end
 
                 # The other half aren't
                 neighbour_parent = parent.faces[d,i_d].cells[i_d]
                 if !initialized(neighbour_parent)
                     # Neighbour lies outside of domain (at_boundary)
-                    face = Face{N}(child, DummyTree{N}(), d, i_d)
+                    face = Face(child, DummyTree{N}(), d, i_d)
                 else
                     if active(neighbour_parent)
                         # Neighbouring parent has no children (at_refinement)
@@ -151,13 +151,13 @@ end
                             refine!(neighbour_parent, state = state)
                             neighbour = parent.faces[d,i_d].cells[i_d]
                         end
-                        face = Face{N}(child, neighbour, d, i_d)
+                        face = Face(child, neighbour, d, i_d)
                     else
                         # If neighbouring parent has children, then take neighbouring child (regular)
                         neighbour_children = neighbour_parent.children
                         neighbour = (@nref $N neighbour_children k -> k == d ? other_side(i_d) : i_k)
 
-                        face = Face{N}(neighbour, child, d, other_side(i_d))
+                        face = Face(neighbour, child, d, other_side(i_d))
 
                         # Also update the faces of the neighbour (only when they are of equal level)
                         neighbour.faces[d,other_side(i_d)] = face
