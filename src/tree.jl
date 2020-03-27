@@ -16,7 +16,7 @@ function Tree(position; state::Function=x->nothing, periodic::Vector{Bool} = fil
     tree = Tree(DummyTree{N}(), 0, position, fill(DummyFace{N,0}(), N, 2), fill(DummyTree{N}(), Tuple(2*ones(Int, N))), state(position))
     for dir=1:N, side=1:2
         neigh = periodic[dir] ? tree : DummyTree{N}()
-        tree.faces[dir,side] = Face{N,dir,side}(tree, neigh)
+        tree.faces[dir,side] = Face{N,dir}(tree, neigh, side)
     end
     return tree
 end
@@ -37,7 +37,7 @@ end
 function refine!(cell::Tree; state::Function = x -> nothing, recurse = false)
     if active(cell)
         # Setup leaf children
-        initialize_children!(cell, state)
+        initialize_children!(cell.children, cell, state)
 
         # Set faces of children (may contain a call ro refine! due to graded refinement)
         set_faces_of_children!(cell, state)
@@ -99,15 +99,14 @@ function coarsen!(cells::Vector{Tree}; issorted=false)
     end
 end
 
-@generated function initialize_children!(cell::Tree{N}, state::Function) where N
+@generated function initialize_children!(children::Array{AbstractTree{N}, N}, parent::Tree{N}, state::Function) where N
     quote
-        children = cell.children
         @nloops $N i d->1:2 begin
-            pos = copy(cell.position)
+            pos = copy(parent.position)
             @nexprs $N d -> begin
-                pos[d] += (Float64(i_d) .- 1.5) / (2 << level(cell))
+                pos[d] += (Float64(i_d) .- 1.5) / (2 << level(parent))
             end
-            (@nref $N children i) = Tree(cell, level(cell) + 1, pos, fill(DummyFace{$N,0}(), $N, 2), fill(DummyTree{$N}(), Tuple(2*ones(Int, $N))), state(pos))
+            (@nref $N children i) = Tree(parent, level(parent) + 1, pos, fill(DummyFace{$N,0}(), $N, 2), fill(DummyTree{$N}(), Tuple(2*ones(Int, $N))), state(pos))
         end
     end
 end
@@ -122,9 +121,9 @@ end
 
 # NB when this function is called, it is assumed that the faces are fully initialized
 # up untill and including level=level(cell)
-@generated function set_faces_of_children!(cell::Tree{N}, state::Function) where N
+@generated function set_faces_of_children!(parent::Tree{N}, state::Function) where N
     quote
-        children = cell.children
+        children = parent.children
         @nloops $N i d->1:2 begin
             child = (@nref $N children i)
 
@@ -134,39 +133,37 @@ end
                     other_child = (@nref $N children k -> k == d ? other_side(i_d) : i_k)
                     child.faces[d,other_side(i_d)] = other_child.faces[d,i_d]
                 else
-                    child.faces[d,other_side(i_d)] = Face{N,d,other_side(i_d)}(child, (@nref $N children k -> k == d ? other_side(i_d) : i_k))
+                    child.faces[d,other_side(i_d)] = Face{N,d}(child, (@nref $N children k -> k == d ? other_side(i_d) : i_k), other_side(i_d))
                 end
 
                 # The other half aren't
-                if initialized(cell.faces[d,i_d])
-                    neighbour_parent = cell.faces[d,i_d].cells[i_d]
-                    if !initialized(neighbour_parent)
-                        # Neighbour lies outside of domain (at_boundary)
-                        face = Face{N,d,i_d}(child, DummyTree{N}())
-                    else
-                        if active(neighbour_parent)
-                            # Neighbouring parent has no children (at_refinement)
-                            if level(cell) == level(neighbour_parent)
-                                neighbour = neighbour_parent
-                            else
-                                # Ensure that difference in refined level is at most one between neighbouring cells
-                                refine!(neighbour_parent, state = state)
-                                neighbour = cell.faces[d,i_d].cells[i_d]
-                            end
-                            face = Face{N,d,i_d}(child, neighbour)
+                neighbour_parent = parent.faces[d,i_d].cells[i_d]
+                if !initialized(neighbour_parent)
+                    # Neighbour lies outside of domain (at_boundary)
+                    face = Face{N,d}(child, DummyTree{N}(), i_d)
+                else
+                    if active(neighbour_parent)
+                        # Neighbouring parent has no children (at_refinement)
+                        if level(parent) == level(neighbour_parent)
+                            neighbour = neighbour_parent
                         else
-                            # If neighbouring parent has children, then take neighbouring child (regular)
-                            neighbour_children = neighbour_parent.children
-                            neighbour = (@nref $N neighbour_children k -> k == d ? other_side(i_d) : i_k)
-
-                            face = Face{N,d,other_side(i_d)}(neighbour, child)
-
-                            # Also update the faces of the neighbour (only when they are of equal level)
-                            neighbour.faces[d,other_side(i_d)] = face
+                            # Ensure that difference in refined level is at most one between neighbouring cells
+                            refine!(neighbour_parent, state = state)
+                            neighbour = parent.faces[d,i_d].cells[i_d]
                         end
+                        face = Face{N,d}(child, neighbour, i_d)
+                    else
+                        # If neighbouring parent has children, then take neighbouring child (regular)
+                        neighbour_children = neighbour_parent.children
+                        neighbour = (@nref $N neighbour_children k -> k == d ? other_side(i_d) : i_k)
+
+                        face = Face{N,d}(neighbour, child, other_side(i_d))
+
+                        # Also update the faces of the neighbour (only when they are of equal level)
+                        neighbour.faces[d,other_side(i_d)] = face
                     end
-                    child.faces[d,i_d] = face
                 end
+                child.faces[d,i_d] = face
             end
         end
     end
