@@ -31,7 +31,7 @@ end
 @inline other_side(side) = 3 - side
 
 # Refine a single leaf (graded)
-function refine!(cell::Tree, state::Function=x->nothing; recurse=false)
+function refine!(cell::Tree; state::Function = x -> nothing, recurse = false)
     if active(cell)
         # Setup leaf children
         initialize_children!(cell, state)
@@ -42,14 +42,14 @@ function refine!(cell::Tree, state::Function=x->nothing; recurse=false)
         # NB the neighbouring faces of equal level are updated in set_faces_of_children!
     elseif recurse
         for child ∈ cell.children
-            refine!(child, state, recurse=true)
+            refine!(child, state = state, recurse = true)
         end
     end
 
 end
 
 # Refine a list of active_cells
-function refine!(cells::Vector{Tree}, state::Function=x->nothing; recurse=false, issorted=false)
+function refine!(cells::Vector{Tree}; state::Function = x -> nothing, recurse = false, issorted = false)
 
     if !issorted
         # Order cells in increasing level
@@ -58,7 +58,7 @@ function refine!(cells::Vector{Tree}, state::Function=x->nothing; recurse=false,
     end
 
     for cell ∈ cells
-        refine!(cell, state, recurse=recurse)
+        refine!(cell, state = state, recurse = recurse)
     end
 end
 
@@ -147,7 +147,7 @@ end
                                 neighbour = neighbour_parent
                             else
                                 # Ensure that difference in refined level is at most one between neighbouring cells
-                                refine!(neighbour_parent, state)
+                                refine!(neighbour_parent, state = state)
                                 neighbour = cell.faces[d,i_d].cells[i_d]
                             end
                             face = Face{N,d,i_d}(child, neighbour)

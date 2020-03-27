@@ -24,7 +24,7 @@ function adaptive_refinement(fun::Function, max_steps::Int, error_tolerance; pri
     push!(marked, tree)
     for steps = 1:max_steps
 
-        refine!(marked, fun, recurse=true)
+        refine!(marked, state = fun, recurse = true)
         if print_table
             push!(integral, integrate(tree))
             push!(nr_of_cells, length(cells(tree)))
