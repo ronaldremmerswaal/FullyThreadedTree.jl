@@ -25,7 +25,7 @@ end
 
 
 @inline area(face::Face{N}) where N = 1. / (1 << ((N-1)*level(face)))
-function centroid(face::Face{N,D}) where {N,D}
+function centroid(face::Face{N}) where N
     if initialized(face.cells[1]) && initialized(face.cells[2])
         idx = level(face.cells[1]) > level(face.cells[2]) ? 1 : 2
     else
@@ -34,9 +34,9 @@ function centroid(face::Face{N,D}) where {N,D}
 
     position = copy(face.cells[idx].position)
     if idx == 1
-        position[D] += 1. / (2<<level(face.cells[idx]))
+        position[direction(face)] += 1. / (2<<level(face.cells[idx]))
     else
-        position[D] -= 1. / (2<<level(face.cells[idx]))
+        position[direction(face)] -= 1. / (2<<level(face.cells[idx]))
     end
     return position
 end

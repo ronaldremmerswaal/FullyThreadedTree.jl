@@ -1,15 +1,16 @@
 # N-dimensional face with normal in the positive D direction
-struct DummyFace{N,D} <: AbstractFace{N,D} end
+struct DummyFace{N} <: AbstractFace{N} end
 
-struct Face{N,D} <: AbstractFace{N,D}
+struct Face{N} <: AbstractFace{N}
     cells::Tuple{AbstractTree{N},AbstractTree{N}}
+    face_direction::Int
     state
 end
 cells(face::Face) = face.cells
 
 # Initialize a face, here Val indicates the side (1 or 2) relative to cell of this face
-function Face{N,D}(cell::AbstractTree{N}, other_cell::AbstractTree{N}, side; state = nothing) where {N,D}
-    side == 1 ? Face{N,D}((other_cell, cell), state) : Face{N,D}((cell, other_cell), state)
+function Face{N}(cell::AbstractTree{N}, other_cell::AbstractTree{N}, face_direction, side; state = nothing) where N
+    side == 1 ? Face{N}((other_cell, cell), face_direction, state) : Face{N}((cell, other_cell), face_direction, state)
 end
 
 @inline at_boundary(face::Face) = (initialized(face.cells[1]) && !initialized(face.cells[2])) || (initialized(face.cells[2]) && !initialized(face.cells[1]))
@@ -26,3 +27,4 @@ end
 @inline initialized(face::Face) = true
 
 @inline level(face::Face) = (initialized(face.cells[1]) && initialized(face.cells[2])) ? max(level(face.cells[1]), level(face.cells[2])) : (initialized(face.cells[1]) ? level(face.cells[1]) : level(face.cells[2]))
+@inline direction(face::Face) = face.face_direction
