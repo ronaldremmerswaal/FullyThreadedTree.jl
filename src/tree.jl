@@ -103,22 +103,23 @@ function coarsen!(cells::Vector{Tree}; issorted=false)
 end
 
 @generated function initialize_children!(children::Array{AbstractTree{N}, N}, parent::Tree{N}, state::Function) where N
+    twos = Tuple(2*ones(Int, N))
     quote
         @nloops $N i d->1:2 @inbounds begin
             pos = copy(parent.position)
             @nexprs $N d -> begin
                 pos[d] += (Float64(i_d) .- 1.5) / (2 << level(parent))
             end
-            (@nref $N children i) = Tree(parent, level(parent) + 1, pos, fill(Face{N}(), N, 2), fill(DummyTree{$N}(), Tuple(2*ones(Int, $N))), state(pos))
+            (@nref $N children i) = Tree(parent, level(parent) + 1, pos, fill(Face{$N}(), $N, 2), fill(DummyTree{$N}(), $twos), state(pos))
         end
     end
 end
 
 # NB this is the N-dimensional variant of
-# function initialize_children!(cell::Tree{N}, state::Function) where N
+# function initialize_children!(children::Array{AbstractTree{2}, 2}, parent::Tree{2}, state::Function)
 #     for i=1:2, j=1:2
-#         pos = cell.position + (Float64.([i, j]) .- 1.5) / (2 << level(cell))
-#         cell.children[i,j] = Tree(cell, level(cell) + 1, pos, fill(DummyFace{N}(), 2, 2), fill(DummyTree{N}(), 2, 2), state(pos))
+#         pos = parent.position + (Float64.([i, j]) .- 1.5) / (2 << level(parent))
+#         parent.children[i,j] = Tree(parent, level(parent) + 1, pos, fill(Face{2}(), 2, 2), fill(DummyTree{2}(), 2, 2), state(pos))
 #     end
 # end
 
@@ -142,7 +143,7 @@ end
                 neighbour_parent = parent.faces[d,i_d].cells[i_d]
                 if !initialized(neighbour_parent)
                     # Neighbour lies outside of domain (at_boundary)
-                    face = Face(child, DummyTree{N}(), d, i_d)
+                    face = Face(child, DummyTree{$N}(), d, i_d)
                 else
                     if active(neighbour_parent)
                         # Neighbouring parent has no children (at_refinement)
