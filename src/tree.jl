@@ -103,14 +103,13 @@ function coarsen!(cells::Vector{Tree}; issorted=false)
 end
 
 @generated function initialize_children!(children::Array{AbstractTree{N}, N}, parent::Tree{N}, state::Function) where N
-    twos = Tuple(2*ones(Int, N))
     quote
         @nloops $N i d->1:2 @inbounds begin
             pos = copy(parent.position)
             @nexprs $N d -> begin
                 pos[d] += (Float64(i_d) .- 1.5) / (2 << level(parent))
             end
-            (@nref $N children i) = Tree(parent, level(parent) + 1, pos, fill(Face{$N}(), $N, 2), fill(DummyTree{$N}(), $twos), state(pos))
+            (@nref $N children i) = Tree(parent, level(parent) + 1, pos, fill(Face{$N}(), $N, 2), fill(DummyTree{$N}(), size(children)), state(pos))
         end
     end
 end
