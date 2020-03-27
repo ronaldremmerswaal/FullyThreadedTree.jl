@@ -4,6 +4,8 @@ struct DummyFace{N,D} <: AbstractFace{N,D} end
 struct Face{N,D,S} <: AbstractFace{N,D} where S
     cells::Tuple{AbstractTree{N},AbstractTree{N}}
 end
+cells(face::Face) = face.cells
+
 # Initialize a face, here Val indicates the side (1 or 2) relative to cell of this face
 Face{N,D,2}(cell::AbstractTree{N}, other_cell::AbstractTree{N}) where {N,D} = Face{N,D,1}((cell, other_cell))
 Face{N,D,1}(cell::AbstractTree{N}, other_cell::AbstractTree{N}) where {N,D} = Face{N,D,2}((other_cell, cell))

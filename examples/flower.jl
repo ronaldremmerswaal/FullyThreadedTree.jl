@@ -1,7 +1,7 @@
 using FullyThreadedTree
 using PrettyTables
 
-max_level = 12
+max_steps = 12
 error_tolerance = 1E-2
 R = pi / 12.
 
@@ -53,7 +53,7 @@ function adaptive_refinement(fun::Function, max_steps::Int, error_tolerance; pri
 
     if print_table
         formatter = Dict(0 => (v, i) -> typeof(v) == Int ? Int(v) : round(v; digits=5))
-        pretty_table(hcat(1 : max_steps, nr_of_active_cells, nr_of_cells, nr_marked_cells, max_error, integral), ["level", "# active_cells", "# cells", "# marked", "error", "integral"], tf = markdown, formatter = formatter)
+        pretty_table(hcat(1 : max_steps, nr_of_active_cells, nr_of_cells, nr_marked_cells, max_error, integral), ["step", "# active_cells", "# cells", "# marked", "error", "integral"], tf = markdown, formatter = formatter)
     end
 
     return tree
