@@ -3,12 +3,13 @@ struct DummyFace{N,D} <: AbstractFace{N,D} end
 
 struct Face{N,D,S} <: AbstractFace{N,D} where S
     cells::Tuple{AbstractTree{N},AbstractTree{N}}
+    state
 end
 cells(face::Face) = face.cells
 
 # Initialize a face, here Val indicates the side (1 or 2) relative to cell of this face
-Face{N,D,2}(cell::AbstractTree{N}, other_cell::AbstractTree{N}) where {N,D} = Face{N,D,1}((cell, other_cell))
-Face{N,D,1}(cell::AbstractTree{N}, other_cell::AbstractTree{N}) where {N,D} = Face{N,D,2}((other_cell, cell))
+Face{N,D,2}(cell::AbstractTree{N}, other_cell::AbstractTree{N}, state = nothing) where {N,D} = Face{N,D,1}((cell, other_cell), state)
+Face{N,D,1}(cell::AbstractTree{N}, other_cell::AbstractTree{N}, state = nothing) where {N,D} = Face{N,D,2}((other_cell, cell), state)
 
 @inline at_boundary(face::Face) = (initialized(face.cells[1]) && !initialized(face.cells[2])) || (initialized(face.cells[2]) && !initialized(face.cells[1]))
 @inline at_boundary(face::AbstractFace) = false
