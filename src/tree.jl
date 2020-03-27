@@ -1,7 +1,7 @@
 struct DummyTree{N} <: AbstractTree{N} end
 
 # A N-dimensional tree
-struct Tree{N} <: AbstractTree{N}
+mutable struct Tree{N} <: AbstractTree{N}
     parent::AbstractTree{N}
     level::Int
     position::Vector
@@ -31,7 +31,7 @@ end
 @inline other_side(side) = 3 - side
 
 # Refine a single leaf (graded)
-function refine!(cell::Tree; state::Function = x -> nothing, recurse = false)
+function refine!(cell::Tree{N}; state::Function = x -> nothing, recurse = false) where N
     if active(cell)
         # Setup leaf children
         initialize_children!(cell, state)
@@ -49,7 +49,7 @@ function refine!(cell::Tree; state::Function = x -> nothing, recurse = false)
 end
 
 # Refine a list of active_cells
-function refine!(cells::Vector{Tree}; state::Function = x -> nothing, recurse = false, issorted = false)
+function refine!(cells::Vector{Tree{N}}; state::Function = x -> nothing, recurse = false, issorted = false) where N
 
     if !issorted
         # Order cells in increasing level
