@@ -5,6 +5,9 @@ struct Face{N} <: AbstractFace{N}
     cells::Tuple{AbstractTree{N},AbstractTree{N}}
     face_direction::Int
     state
+
+    Face{N}() where N = new()
+    Face{N}(cells, face_direction, state) where N = new(cells, face_direction, state)
 end
 cells(face::Face) = face.cells
 

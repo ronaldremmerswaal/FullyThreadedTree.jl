@@ -1,11 +1,11 @@
 struct DummyTree{N} <: AbstractTree{N} end
 
 # A N-dimensional tree
-mutable struct Tree{N} <: AbstractTree{N}
+struct Tree{N} <: AbstractTree{N}
     parent::AbstractTree{N}
     level::Int
     position::Vector
-    faces::Array{AbstractFace{N}, 2}        # index1 = direction (x/y), index2 = side (left/right), ...
+    faces::Array{Face{N}, 2}                # index1 = direction (x/y), index2 = side (left/right), ...
     children::Array{AbstractTree{N}, N}     # index1 = x-direction, index2 = y-direction, ...
     state
 end
@@ -13,7 +13,7 @@ end
 Tree(parent, level, position, faces, children, state) = Tree{length(position)}(parent, level, position, faces, children, state)
 function Tree(position; state::Function=x->nothing, periodic::Vector{Bool} = fill(false, length(position)))
     N = length(position)
-    tree = Tree(DummyTree{N}(), 0, position, fill(DummyFace{N}(), N, 2), fill(DummyTree{N}(), Tuple(2*ones(Int, N))), state(position))
+    tree = Tree(DummyTree{N}(), 0, position, fill(Face{N}(), N, 2), fill(DummyTree{N}(), Tuple(2*ones(Int, N))), state(position))
     for dir=1:N, side=1:2
         neigh = periodic[dir] ? tree : DummyTree{N}()
         tree.faces[dir,side] = Face(tree, neigh, dir, side)
@@ -40,9 +40,9 @@ function refine!(cell::Tree; state::Function = x -> nothing, recurse = false)
         initialize_children!(cell.children, cell, state)
 
         # Set faces of children (may contain a call ro refine! due to graded refinement)
-        set_faces_of_children!(cell, state)
+        initialize_faces_of_children!(cell, state)
 
-        # NB the neighbouring faces of equal level are updated in set_faces_of_children!
+        # NB the neighbouring faces of equal level are updated in initialize_faces_of_children!
     elseif recurse
         for child ∈ cell.children
             refine!(child, state = state, recurse = true)
@@ -106,7 +106,7 @@ end
             @nexprs $N d -> begin
                 pos[d] += (Float64(i_d) .- 1.5) / (2 << level(parent))
             end
-            (@nref $N children i) = Tree(parent, level(parent) + 1, pos, fill(DummyFace{$N}(), $N, 2), fill(DummyTree{$N}(), Tuple(2*ones(Int, $N))), state(pos))
+            (@nref $N children i) = Tree(parent, level(parent) + 1, pos, fill(Face{N}(), N, 2), fill(DummyTree{$N}(), Tuple(2*ones(Int, $N))), state(pos))
         end
     end
 end
@@ -121,7 +121,7 @@ end
 
 # NB when this function is called, it is assumed that the faces are fully initialized
 # up untill and including level=level(cell)
-@generated function set_faces_of_children!(parent::Tree{N}, state::Function) where N
+@generated function initialize_faces_of_children!(parent::Tree{N}, state::Function) where N
     quote
         children = parent.children
         @nloops $N i d->1:2 begin
