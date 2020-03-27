@@ -59,5 +59,5 @@ function adaptive_refinement(fun::Function, max_steps::Int, error_tolerance; pri
     return tree
 end
 
-tree = adaptive_refinement(shape, max_level, error_tolerance, print_table=true)
+tree = adaptive_refinement(shape, max_steps, error_tolerance, print_table=true)
 display(plot(tree))
