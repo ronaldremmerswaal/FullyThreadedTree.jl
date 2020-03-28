@@ -13,7 +13,7 @@ struct Tree{N} <: AbstractTree{N}
     level::Int
     position::Vector
     faces::Array{Face{N}, 2}            # index1 = direction (x/y), index2 = side (left/right), ...
-    children::Array{Tree{N}}            # index1 = x-direction, index2 = y-direction, ...
+    children::Vector{Tree{N}}           # index1 = x-direction, index2 = y-direction, ... (reshape(N, N, N...))
     state
 
     Tree{N}() where N = new()
@@ -46,6 +46,22 @@ end
 @inline parent_of_active(cell::AbstractTree) = false
 
 @inline other_side(side) = 3 - side
+
+function siblings(cell::Tree{N}) where N
+    if level(cell) <= 0 return nothing end
+    return cell.parent.children
+end
+
+@generated function siblings(cell::Tree{N}, dir::Int, side::Int) where N
+    twos = Tuple(2*ones(Int64, N))
+    quote
+        if level(cell) <= 0 return nothing end
+
+        fine_cells = reshape(cell.parent.children, $twos)
+        # TODO return view
+        return (@nref $N fine_cells d -> d == dir ? side : (:))
+    end
+end
 
 
 # Refine a single leaf (graded)

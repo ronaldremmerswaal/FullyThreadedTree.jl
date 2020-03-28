@@ -1,6 +1,6 @@
 import Plots, Plots.plot, Plots.plot!, Plots.current
 
-function plot(tree::Tree{1}; filter::Function = active)
+function plot!(tree::Tree{1}; filter::Function = active)
     X = Vector()
     Y = Vector()
     max_level = 0
@@ -18,6 +18,11 @@ function plot(tree::Tree{1}; filter::Function = active)
 end
 
 function plot(tree::Tree{2}; markers::Bool = false, max_marker_level::Int = 5, path::Bool = false, filter::Function = active)
+    plot()
+    plot!(tree, markers = markers, max_marker_level = max_marker_level, path = path, filter = filter)
+end
+
+function plot!(tree::Tree{2}; markers::Bool = false, max_marker_level::Int = 5, path::Bool = false, filter::Function = active)
     X = Vector()
     Y = Vector()
 
@@ -33,7 +38,7 @@ function plot(tree::Tree{2}; markers::Bool = false, max_marker_level::Int = 5, p
     end
     linewidth0 = 4.
     linewidth = linewidth0 / (1 << max_level)
-    plot(X, Y, legend = false, color=:black, linewidth = linewidth)
+    plot!(X, Y, legend = false, color=:black, linewidth = linewidth)
 
     if path
         X = Vector()
@@ -74,7 +79,7 @@ function plot(tree::Tree{2}; markers::Bool = false, max_marker_level::Int = 5, p
     return Plots.current()
 end
 
-function plot(tree::Tree{3}; markers::Bool = false, max_marker_level::Int = 5, path::Bool = false, wireframe=true)
+function plot!(tree::Tree{3}; markers::Bool = false, max_marker_level::Int = 5, path::Bool = false, wireframe=true)
     X = Vector()
     Y = Vector()
     Z = Vector()

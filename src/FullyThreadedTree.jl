@@ -25,7 +25,8 @@ module FullyThreadedTree
            parent_of_active,
            initialized,
            level,
-           faces
+           faces,
+           siblings
 
     include("interface.jl")
 
@@ -48,7 +49,8 @@ module FullyThreadedTree
 
     include("plotting.jl")
 
-    export plot
+    export plot,
+           plot!
 
 
 end # module
