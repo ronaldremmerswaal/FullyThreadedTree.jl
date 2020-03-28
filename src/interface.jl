@@ -127,8 +127,9 @@ function find_next_face!(face_indices::Vector{Int}, cell_indices::Vector{Int}, c
     return cell.faces[face_indices[1],face_indices[2]], cell
 end
 
-@inline faces(tree::Tree; filter::Function = face -> true, min_level::Int = 0, max_level::Int = typemax(Int)) = (tree.faces[1], filter, min_level, max_level)
-@inline faces(tree::Tree, level::Int; filter::Function = face -> true, min_level::Int = max(0, level), max_level::Int = min(level, typemax(Int))) = (tree.faces[1], filter, min_level, max_level)
+# Iterators over all of the faces
+@inline all_faces(tree::Tree; filter::Function = face -> true, min_level::Int = 0, max_level::Int = typemax(Int)) = (tree.faces[1], filter, min_level, max_level)
+@inline all_faces(tree::Tree, level::Int; filter::Function = face -> true, min_level::Int = max(0, level), max_level::Int = min(level, typemax(Int))) = (tree.faces[1], filter, min_level, max_level)
 function Base.length(tuple::Tuple{Face, Function, Int, Int})
     count = 0
     for cell ∈ tuple

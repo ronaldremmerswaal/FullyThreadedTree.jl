@@ -8,7 +8,6 @@ module FullyThreadedTree
     include("face.jl")
 
     export Face,
-           faces,
            cells,
            at_boundary,
            at_refinement,
@@ -25,7 +24,8 @@ module FullyThreadedTree
            active,
            parent_of_active,
            initialized,
-           level
+           level,
+           faces
 
     include("interface.jl")
 
@@ -33,12 +33,7 @@ module FullyThreadedTree
            show,
            length,
            cells,
-           active_cells,
-           parents_of_active_cell,
-           boundary_faces,
-           refinement_faces,
-           regular_faces,
-           active_faces
+           all_faces
 
 
     include("tools.jl")

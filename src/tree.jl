@@ -31,7 +31,10 @@ function Tree(position; state::Function=x->nothing, periodic::Vector{Bool} = fil
     return tree
 end
 
-# @inline level(cell::Tree{N, L}) where {N, L} = L
+
+@inline faces(cell::Tree) = cell.faces
+@inline faces(cell::AbstractTree{N}) where N = fill(Tree{N}(), 0, 0)
+
 @inline level(cell::Tree) = cell.level
 @inline level(cell::AbstractTree) = -1
 
