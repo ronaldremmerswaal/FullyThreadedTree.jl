@@ -151,7 +151,12 @@ end
                         neighbour_children = neighbour_parent.children
                         neighbour = (@nref $N neighbour_children k -> k == d ? other_side(i_d) : i_k)
 
-                        face = Face(neighbour, child, d, other_side(i_d), face_state)
+                        # face = Face(neighbour, child, d, other_side(i_d), face_state)
+                        if i_d == 1
+                            face = Face{N}((neighbour, child), d, neighbour.faces[d,other_side(i_d)].state)
+                        else
+                            face = Face{N}((child, neighbour), d, neighbour.faces[d,other_side(i_d)].state)
+                        end
 
                         # Also update the faces of the neighbour (only when they are of equal level)
                         neighbour.faces[d,other_side(i_d)] = face
