@@ -64,8 +64,7 @@ function refine!(cells::Vector{Tree}; state::Function = x -> nothing, recurse = 
 
     if !issorted
         # Order cells in increasing level
-        levels = [level(cell) for cell ∈ cells]
-        cells = cells[sortperm(levels)]
+        sort!(cells, by=level)
     end
 
     for cell ∈ cells
@@ -164,8 +163,7 @@ end
 function coarsen!(cells::Vector{Tree}; state::Function = x -> nothing, issorted = false)
     if !issorted
         # Order cells in decreasing level (to ensure that graded noncoarsening is not an issue)
-        levels = [level(cell) for cell ∈ cells]
-        cells = cells[sortperm(levels, rev=true)]
+        sort!(cells, by=level, rev=true)
     end
 
     for cell ∈ cells
