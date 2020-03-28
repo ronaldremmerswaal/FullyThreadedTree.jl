@@ -3,14 +3,12 @@ import Plots, Plots.plot, Plots.plot!, Plots.current
 function plot!(tree::Tree{1}; filter::Function = active)
     X = Vector()
     Y = Vector()
-    max_level = 0
     for cell ∈ cells(tree, filter=filter)
         push!(X, cell.position[1])
         push!(Y, cell.state)
-
-        max_level = max(max_level, level(cell))
     end
 
+    max_level = levels(tree) - 1
     plot(X, Y, legend = false)
     plot!(X, zeros(length(X)), seriestype=:scatter, markersize = 20. /  (1 << max_level))
 
@@ -26,16 +24,14 @@ function plot!(tree::Tree{2}; markers::Bool = false, max_marker_level::Int = 5, 
     X = Vector()
     Y = Vector()
 
-    max_level = 0
     for cell ∈ cells(tree, filter=filter)
         append!(X, NaN)
         append!(Y, NaN)
 
         append!(X, cell.position[1] .+ [-1., 1., 1., -1., -1.] / (2 << (level(cell))))
         append!(Y, cell.position[2] .+ [-1., -1., 1., 1., -1.] / (2 << (level(cell))))
-
-        max_level = max(max_level, level(cell))
     end
+    max_level = levels(tree) - 1
     linewidth0 = 4.
     linewidth = linewidth0 / (1 << max_level)
     plot!(X, Y, legend = false, color=:black, linewidth = linewidth)
