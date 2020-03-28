@@ -13,7 +13,7 @@ mutable struct Tree{N} <: AbstractTree{N}
     level::Int
     position::Vector
     faces::Array{Face{N}, 2}            # index1 = direction (x/y), index2 = side (left/right), ...
-    children::Array{Tree{N}, N}         # index1 = x-direction, index2 = y-direction, ...
+    children::Array{Tree{N}}            # index1 = x-direction, index2 = y-direction, ...
     state
 
     Tree{N}() where N = new()
@@ -23,7 +23,7 @@ end
 Tree(parent, level, position, faces, children, state) = Tree{length(position)}(parent, level, position, faces, children, state)
 function Tree(position; cell_state::Function = x->nothing, face_state = nothing, periodic::Vector{Bool} = fill(false, length(position)))
     N = length(position)
-    tree = Tree(Tree{N}(), 0, position, fill(Face{N}(), N, 2), fill(Tree{N}(), Tuple(zeros(Int, N))), cell_state(position))
+    tree = Tree(Tree{N}(), 0, position, fill(Face{N}(), N, 2), Vector{Tree{N}}(), cell_state(position))
     for dir=1:N, side=1:2
         neigh = periodic[dir] ? tree : DummyTree{N}()
         tree.faces[dir,side] = Face(tree, neigh, dir, side, face_state)
@@ -83,7 +83,6 @@ function refine!(cells::Vector{Tree{N}}; cell_state::Function = x -> nothing, fa
 end
 
 @generated function initialize_children(parent::Tree{N}, state::Function) where N
-    dimensions = Tuple(zeros(Int, N))
     quote
         children = fill(Tree{N}(), Tuple(2*ones(Int, N)))
         @nloops $N i d->1:2 @inbounds begin
@@ -91,7 +90,7 @@ end
             @nexprs $N d -> begin
                 pos[d] += (Float64(i_d) .- 1.5) / (2 << level(parent))
             end
-            (@nref $N children i) = Tree(parent, level(parent) + 1, pos, fill(Face{$N}(), $N, 2), fill(DummyTree{N}(), $dimensions), state(pos))
+            (@nref $N children i) = Tree(parent, level(parent) + 1, pos, fill(Face{$N}(), $N, 2), Vector{Tree{N}}(), state(pos))
         end
         return children
     end
@@ -157,45 +156,64 @@ end
 # Coarsen a single leafparent (graded in the sense that if faces are of a higher level then we do not coarsen)
 function coarsen!(cell::Tree{N}; face_state = nothing) where N
     if !parent_of_active(cell) return end
-    for neighbour ∈ cell.faces
+    for dir=1:N, side=1:2
+        neighbour = cell.faces[dir,side]
+
         # graded noncoarsening
-        if initialized(neighbour) && level(neighbour) > level(cell) return end
+        if !at_boundary(neighbour) && !active(neighbour.cells[side])
+            return Vector{Tree{N}}(), Vector{Face{N}}()
+        end
     end
 
     # Update any face which pointed to the children which are to be removed
-    update_faces_of_neighbouring_children!(cell.children, cell, face_state)
+    rm_faces = update_faces_of_neighbouring_children!(cell.children, cell, face_state)
 
     # Remove children
-    cell.children = fill(Tree{N}(), Tuple(zeros(Int, N)))
-    return nothing
+    rm_cells = reshape(cell.children, length(cell.children))
+    cell.children = Vector{Tree{N}}()
+
+    return rm_cells, rm_faces
 end
 
-function coarsen!(cells::Vector{Tree}; face_state = nothing, issorted = false)
+function coarsen!(cells::Vector{Tree{N}}; face_state = nothing, issorted = false) where N
     if !issorted
         # Order cells in decreasing level (to ensure that graded noncoarsening is not an issue)
         sort!(cells, by=level, rev=true)
     end
 
+    removed_cells = Vector{Tree{N}}()
+    removed_faces = Vector{Face{N}}()
     for cell ∈ cells
-        coarsen!(cell, face_face_state)
+        rm_cells, rm_faces = coarsen!(cell, face_state = face_state)
+        append!(removed_cells, rm_cells)
+        append!(removed_faces, rm_faces)
     end
+    return removed_cells, removed_faces
 end
 
-@generated function update_faces_of_neighbouring_children!(children::Array{Tree{N}, N}, parent::Tree{N}, state::Function) where N
+# Child is either at higher level than neighbour or at same
+@generated function update_faces_of_neighbouring_children!(children::Array{Tree{N}, N}, parent::Tree{N}, face_state) where N
     quote
+        removed_faces = Vector{Face{N}}()
         @nloops $N i d->1:2 @inbounds begin
             child = (@nref $N children i)
 
             @nexprs $N d -> begin
                 # Half of the faces are siblings; these faces are simply removed when the children are removed
+                push!(removed_faces, child.faces[d,other_side(i_d)])
 
                 # The other half may refer to child
                 neighbour = child.faces[d,i_d].cells[i_d]
-                if level(child) == level(neighbour)
+                if level(child) == level(neighbour)         # !at_refinement
                     # After child is removed, the neighbour of neighbour will be the parent
+                    push!(removed_faces, neighbour.faces[d,other_side(i_d)])
                     neighbour.faces[d,other_side(i_d)] = Face(neighbour, parent, d, other_side(i_d), face_state)
+                elseif level(child) == level(neighbour) + 1 # at_refinement
+                    push!(removed_faces, child.faces[d,i_d])
+
                 end
             end
         end
+        return removed_faces
     end
 end
