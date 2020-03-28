@@ -176,13 +176,10 @@ function coarsen!(cell::Tree{N}; face_state = nothing) where N
     end
 
     # Update any face which pointed to the children which are to be removed
-    rm_faces = update_faces_of_neighbouring_children!(cell.children, cell, face_state)
+    update_faces_of_neighbouring_children!(cell.children, cell, face_state)
 
     # Remove children
-    rm_cells = reshape(cell.children, length(cell.children))
     cell.children = Vector{Tree{N}}()
-
-    return rm_cells, rm_faces
 end
 
 function coarsen!(cells::Vector{Tree{N}}; face_state = nothing, issorted = false) where N
@@ -191,20 +188,14 @@ function coarsen!(cells::Vector{Tree{N}}; face_state = nothing, issorted = false
         sort!(cells, by=level, rev=true)
     end
 
-    removed_cells = Vector{Tree{N}}()
-    removed_faces = Vector{Face{N}}()
     for cell ∈ cells
-        rm_cells, rm_faces = coarsen!(cell, face_state = face_state)
-        append!(removed_cells, rm_cells)
-        append!(removed_faces, rm_faces)
+        coarsen!(cell, face_state = face_state)
     end
-    return removed_cells, removed_faces
 end
 
 # Child is either at higher level than neighbour or at same
 @generated function update_faces_of_neighbouring_children!(children::Array{Tree{N}, N}, parent::Tree{N}, face_state) where N
     quote
-        removed_faces = Vector{Face{N}}()
         @nloops $N i d->1:2 @inbounds begin
             child = (@nref $N children i)
 
@@ -216,14 +207,9 @@ end
                 neighbour = child.faces[d,i_d].cells[i_d]
                 if level(child) == level(neighbour)         # !at_refinement
                     # After child is removed, the neighbour of neighbour will be the parent
-                    push!(removed_faces, neighbour.faces[d,other_side(i_d)])
                     neighbour.faces[d,other_side(i_d)] = Face(neighbour, parent, d, other_side(i_d), face_state)
-                elseif level(child) == level(neighbour) + 1 # at_refinement
-                    push!(removed_faces, child.faces[d,i_d])
-
                 end
             end
         end
-        return removed_faces
     end
 end
