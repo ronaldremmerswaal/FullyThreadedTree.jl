@@ -70,7 +70,7 @@ end
 # refine!(cells::Array{Tree, N} where N; state::Function = x -> nothing, recurse = false, issorted = false) = refine!(reshape(cells, length(cells)), state = state, recurse = recurse, issorted = issorted)
 
 # Refine a list of active_cells
-function refine!(cells::Vector{Tree}; cell_state::Function = x -> nothing, face_state = nothing, recurse = false, issorted = false)
+function refine!(cells::Vector{Tree{N}}; cell_state::Function = x -> nothing, face_state = nothing, recurse = false, issorted = false) where N
 
     if !issorted
         # Order cells in increasing level
@@ -193,7 +193,7 @@ end
                 neighbour = child.faces[d,i_d].cells[i_d]
                 if level(child) == level(neighbour)
                     # After child is removed, the neighbour of neighbour will be the parent
-                    neighbour.faces[d,other_side(i_d)] = Face(neighbour, parent, d, other_side(i_d), state = face_state)
+                    neighbour.faces[d,other_side(i_d)] = Face(neighbour, parent, d, other_side(i_d), face_state)
                 end
             end
         end

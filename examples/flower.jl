@@ -21,7 +21,7 @@ function adaptive_refinement(fun::Function, max_steps::Int, error_tolerance; plo
         nr_marked_cells = Vector()
     end
 
-    marked = Vector{Tree}()
+    marked = Vector{Tree{dim}}()
     push!(marked, tree)
     for steps = 1:max_steps
 
@@ -31,7 +31,7 @@ function adaptive_refinement(fun::Function, max_steps::Int, error_tolerance; plo
             push!(nr_of_cells, length(cells(tree)))
             push!(nr_of_active_cells, length(cells(tree, filter=active)))
         end
-        marked = Vector{Tree}()
+        marked = Vector{Tree{dim}}()
 
         if collect_data
             push!(max_error, 0.)
