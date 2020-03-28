@@ -1,10 +1,10 @@
 import Plots, Plots.plot, Plots.plot!, Plots.current
 
-function plot(tree::Tree{1})
+function plot(tree::Tree{1}; filter::Function = active)
     X = Vector()
     Y = Vector()
     max_level = 0
-    for cell ∈ cells(tree, filter=active)
+    for cell ∈ cells(tree, filter=filter)
         push!(X, cell.position[1])
         push!(Y, cell.state)
 
@@ -17,12 +17,12 @@ function plot(tree::Tree{1})
     return current()
 end
 
-function plot(tree::Tree{2}; markers::Bool = false, max_marker_level::Int = 5, path::Bool = false)
+function plot(tree::Tree{2}; markers::Bool = false, max_marker_level::Int = 5, path::Bool = false, filter::Function = active)
     X = Vector()
     Y = Vector()
 
     max_level = 0
-    for cell ∈ cells(tree, filter=active)
+    for cell ∈ cells(tree, filter=filter)
         append!(X, NaN)
         append!(Y, NaN)
 
@@ -38,7 +38,7 @@ function plot(tree::Tree{2}; markers::Bool = false, max_marker_level::Int = 5, p
     if path
         X = Vector()
         Y = Vector()
-        for cell ∈ cells(tree, filter=active)
+        for cell ∈ cells(tree, filter=filter)
             pos = centroid(cell)
             push!(X, pos[1])
             push!(Y, pos[2])
@@ -52,7 +52,7 @@ function plot(tree::Tree{2}; markers::Bool = false, max_marker_level::Int = 5, p
 
         X = Vector()
         Y = Vector()
-        for cell ∈ cells(tree, filter=active, max_level = max_marker_level)
+        for cell ∈ cells(tree, filter=filter, max_level = max_marker_level)
             pos = centroid(cell)
             push!(X, pos[1])
             push!(Y, pos[2])
@@ -61,7 +61,7 @@ function plot(tree::Tree{2}; markers::Bool = false, max_marker_level::Int = 5, p
 
         X = Vector()
         Y = Vector()
-        for face ∈ all_faces(tree, filter = active)
+        for face ∈ all_faces(tree, filter = filter)
             if level(face) < max_marker_level
                 pos = centroid(face)
                 push!(X, pos[1])
@@ -85,7 +85,7 @@ function plot(tree::Tree{3}; markers::Bool = false, max_marker_level::Int = 5, p
     if wireframe
         xloop = [-1., 1., 1., -1., -1.]
         yloop = [-1., -1., 1., 1., -1.]
-        for cell ∈ cells(tree, filter=active)
+        for cell ∈ cells(tree, filter=filter)
             append!(X, NaN)
             append!(Y, NaN)
             append!(Z, NaN)
@@ -112,7 +112,7 @@ function plot(tree::Tree{3}; markers::Bool = false, max_marker_level::Int = 5, p
         X = Vector()
         Y = Vector()
         Z = Vector()
-        for cell ∈ cells(tree, filter=active)
+        for cell ∈ cells(tree, filter=filter)
             pos = centroid(cell)
             push!(X, pos[1])
             push!(Y, pos[2])
@@ -128,7 +128,7 @@ function plot(tree::Tree{3}; markers::Bool = false, max_marker_level::Int = 5, p
         X = Vector()
         Y = Vector()
         Z = Vector()
-        for cell ∈ cells(tree, filter=active)
+        for cell ∈ cells(tree, filter=filter)
             if level(cell) < max_marker_level
                 pos = centroid(cell)
                 push!(X, pos[1])
@@ -141,7 +141,7 @@ function plot(tree::Tree{3}; markers::Bool = false, max_marker_level::Int = 5, p
         X = Vector()
         Y = Vector()
         Z = Vector()
-        for face ∈ all_faces(tree, filter = active)
+        for face ∈ all_faces(tree, filter = filter)
             if level(face) < max_marker_level
                 pos = centroid(face)
                 push!(X, pos[1])

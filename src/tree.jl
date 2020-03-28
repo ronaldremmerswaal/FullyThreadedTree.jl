@@ -26,7 +26,7 @@ function Tree(position; cell_state::Function = x->nothing, face_state = nothing,
     tree = Tree(Tree{N}(), 0, position, fill(Face{N}(), N, 2), Vector{Tree{N}}(), cell_state(position))
     for dir=1:N, side=1:2
         neigh = periodic[dir] ? tree : DummyTree{N}()
-        tree.faces[dir,side] = Face(tree, neigh, dir, side, face_state)
+        tree.faces[dir,side] = periodic[dir] && side == 2 ? tree.faces[dir,other_side(side)] : Face(tree, neigh, dir, side, face_state)
     end
     return tree
 end
