@@ -1,12 +1,12 @@
 struct DummyTree{N} <: AbstractTree{N} end
 
 # A N-dimensional tree
-struct Tree{N} <: AbstractTree{N}
+mutable struct Tree{N} <: AbstractTree{N}
     parent::Tree{N}
     level::Int
     position::Vector
-    faces::Array{Face{N}, 2}                # index1 = direction (x/y), index2 = side (left/right), ...
-    children::Array{AbstractTree{N}, N}     # index1 = x-direction, index2 = y-direction, ...
+    faces::Array{Face{N}, 2}            # index1 = direction (x/y), index2 = side (left/right), ...
+    children::Array{Tree{N}, N}         # index1 = x-direction, index2 = y-direction, ...
     state
 
     Tree{N}() where N = new()
@@ -16,7 +16,7 @@ end
 Tree(parent, level, position, faces, children, state) = Tree{length(position)}(parent, level, position, faces, children, state)
 function Tree(position; state::Function=x->nothing, periodic::Vector{Bool} = fill(false, length(position)))
     N = length(position)
-    tree = Tree(Tree{N}(), 0, position, fill(Face{N}(), N, 2), fill(DummyTree{N}(), Tuple(2*ones(Int, N))), state(position))
+    tree = Tree(Tree{N}(), 0, position, fill(Face{N}(), N, 2), fill(Tree{N}(), Tuple(zeros(Int, N))), state(position))
     for dir=1:N, side=1:2
         neigh = periodic[dir] ? tree : DummyTree{N}()
         tree.faces[dir,side] = Face(tree, neigh, dir, side)
@@ -26,8 +26,9 @@ end
 
 # @inline level(cell::Tree{N, L}) where {N, L} = L
 @inline level(cell::Tree) = cell.level
+@inline level(cell::AbstractTree) = -1
 
-@inline active(cell::Tree) = !initialized(cell.children[1])
+@inline active(cell::Tree) = isempty(cell.children)
 @inline active(cell::AbstractTree) = false
 @inline initialized(cell::Tree) = true
 @inline initialized(cell::AbstractTree) = false
@@ -36,14 +37,17 @@ end
 
 @inline other_side(side) = 3 - side
 
+
 # Refine a single leaf (graded)
-function refine!(cell::Tree; state::Function = x -> nothing, recurse = false)
+function refine!(cell::Tree{N}; state::Function = x -> nothing, recurse = false) where N
     if active(cell)
         # Setup leaf children
-        initialize_children!(cell.children, cell, state)
+        children = fill(Tree{N}(), Tuple(2*ones(Int, N)))
+        initialize_children!(children, cell, state)
 
         # Set faces of children (may contain a call ro refine! due to graded refinement)
-        initialize_faces_of_children!(cell.children, cell, state)
+        initialize_faces_of_children!(children, cell, state)
+        cell.children = children
 
         # NB the neighbouring faces of equal level are updated in initialize_faces_of_children!
     elseif recurse
@@ -51,7 +55,7 @@ function refine!(cell::Tree; state::Function = x -> nothing, recurse = false)
             refine!(child, state = state, recurse = true)
         end
     end
-
+    return nothing
 end
 
 # Refine a list of active_cells
@@ -68,48 +72,15 @@ function refine!(cells::Vector{Tree}; state::Function = x -> nothing, recurse = 
     end
 end
 
-# Coarsen a single leafparent (graded in the sense that if faces are of a higher level then we do not coarsen)
-function coarsen!(cell::Tree{N}) where N
-    if !parent_of_active(cell) return end
-    for neighbour ∈ cell.faces
-        # graded noncoarsening
-        if initialized(neighbour) && !active(neighbour) return end
-    end
-
-    # Remove children
-    for i ∈ LinearIndices(cell.children)
-        cell.children[i] = DummyTree{N}()
-    end
-
-    # Update neighbour pointers (same level only)
-    @inbounds for dir=1:N, side=1:2
-        if initialized(cell.faces[dir,side]) && cell.faces[dir,side].level == level(cell) + 1
-            cell.faces[dir,side].faces[dir,other_side(side)] = cell
-        end
-    end
-
-end
-
-function coarsen!(cells::Vector{Tree}; issorted=false)
-    if !issorted
-        # Order cells in decreasing level (to ensure that graded noncoarsening is not an issue)
-        levels = [level(cell) for cell ∈ cells]
-        cells = cells[sortperm(levels, rev=true)]
-    end
-
-    for cell ∈ cells
-        coarsen!(cell)
-    end
-end
-
-@generated function initialize_children!(children::Array{AbstractTree{N}, N}, parent::Tree{N}, state::Function) where N
+@generated function initialize_children!(children::Array{Tree{N}, N}, parent::Tree{N}, state::Function) where N
+    dimensions = Tuple(zeros(Int, N))
     quote
         @nloops $N i d->1:2 @inbounds begin
             pos = copy(parent.position)
             @nexprs $N d -> begin
                 pos[d] += (Float64(i_d) .- 1.5) / (2 << level(parent))
             end
-            (@nref $N children i) = Tree(parent, level(parent) + 1, pos, fill(Face{$N}(), $N, 2), fill(DummyTree{$N}(), size(children)), state(pos))
+            (@nref $N children i) = Tree(parent, level(parent) + 1, pos, fill(Face{$N}(), $N, 2), fill(DummyTree{N}(), $dimensions), state(pos))
         end
     end
 end
@@ -124,7 +95,7 @@ end
 
 # NB when this function is called, it is assumed that the faces are fully initialized
 # up untill and including level=level(cell)
-@generated function initialize_faces_of_children!(children::Array{AbstractTree{N}, N}, parent::Tree{N}, state::Function) where N
+@generated function initialize_faces_of_children!(children::Array{Tree{N}, N}, parent::Tree{N}, state::Function) where N
     quote
         @nloops $N i d->1:2 @inbounds begin
             child = (@nref $N children i)
@@ -166,6 +137,53 @@ end
                     end
                 end
                 child.faces[d,i_d] = face
+            end
+        end
+    end
+end
+
+# Coarsen a single leafparent (graded in the sense that if faces are of a higher level then we do not coarsen)
+function coarsen!(cell::Tree{N}; state::Function = x -> nothing) where N
+    if !parent_of_active(cell) return end
+    for neighbour ∈ cell.faces
+        # graded noncoarsening
+        if initialized(neighbour) && level(neighbour) > level(cell) return end
+    end
+
+    # Update any face which pointed to the children which are to be removed
+    update_faces_of_neighbouring_children!(cell.children, cell, state)
+
+    # Remove children
+    cell.children = fill(Tree{N}(), Tuple(zeros(Int, N)))
+    return nothing
+end
+
+function coarsen!(cells::Vector{Tree}; state::Function = x -> nothing, issorted = false)
+    if !issorted
+        # Order cells in decreasing level (to ensure that graded noncoarsening is not an issue)
+        levels = [level(cell) for cell ∈ cells]
+        cells = cells[sortperm(levels, rev=true)]
+    end
+
+    for cell ∈ cells
+        coarsen!(cell, state = state)
+    end
+end
+
+@generated function update_faces_of_neighbouring_children!(children::Array{Tree{N}, N}, parent::Tree{N}, state::Function) where N
+    quote
+        @nloops $N i d->1:2 @inbounds begin
+            child = (@nref $N children i)
+
+            @nexprs $N d -> begin
+                # Half of the faces are siblings; these faces are simply removed when the children are removed
+
+                # The other half may refer to child
+                neighbour = child.faces[d,i_d].cells[i_d]
+                if level(child) == level(neighbour)
+                    # After child is removed, the neighbour of neighbour will be the parent
+                    neighbour.faces[d,other_side(i_d)] = Face(neighbour, parent, d, other_side(i_d))
+                end
             end
         end
     end
