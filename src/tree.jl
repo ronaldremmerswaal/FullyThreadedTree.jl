@@ -206,7 +206,6 @@ end
 
             @nexprs $N d -> begin
                 # Half of the faces are siblings; these faces are simply removed when the children are removed
-                push!(removed_faces, child.faces[d,other_side(i_d)])
 
                 # The other half may refer to child
                 neighbour = child.faces[d,i_d].cells[i_d]
