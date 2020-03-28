@@ -42,8 +42,7 @@ end
 function refine!(cell::Tree{N}; state::Function = x -> nothing, recurse = false) where N
     if active(cell)
         # Setup leaf children
-        children = fill(Tree{N}(), Tuple(2*ones(Int, N)))
-        initialize_children!(children, cell, state)
+        children = initialize_children(cell, state)
 
         # Set faces of children (may contain a call ro refine! due to graded refinement)
         initialize_faces_of_children!(children, cell, state)
@@ -57,6 +56,8 @@ function refine!(cell::Tree{N}; state::Function = x -> nothing, recurse = false)
     end
     return nothing
 end
+
+# refine!(cells::Array{Tree, N} where N; state::Function = x -> nothing, recurse = false, issorted = false) = refine!(reshape(cells, length(cells)), state = state, recurse = recurse, issorted = issorted)
 
 # Refine a list of active_cells
 function refine!(cells::Vector{Tree}; state::Function = x -> nothing, recurse = false, issorted = false)
@@ -72,9 +73,10 @@ function refine!(cells::Vector{Tree}; state::Function = x -> nothing, recurse = 
     end
 end
 
-@generated function initialize_children!(children::Array{Tree{N}, N}, parent::Tree{N}, state::Function) where N
+@generated function initialize_children(parent::Tree{N}, state::Function) where N
     dimensions = Tuple(zeros(Int, N))
     quote
+        children = fill(Tree{N}(), Tuple(2*ones(Int, N)))
         @nloops $N i d->1:2 @inbounds begin
             pos = copy(parent.position)
             @nexprs $N d -> begin
@@ -82,6 +84,7 @@ end
             end
             (@nref $N children i) = Tree(parent, level(parent) + 1, pos, fill(Face{$N}(), $N, 2), fill(DummyTree{N}(), $dimensions), state(pos))
         end
+        return children
     end
 end
 
