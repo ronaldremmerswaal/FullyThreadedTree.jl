@@ -47,6 +47,13 @@ end
 
 @inline other_side(side) = 3 - side
 
+function root(cell::Tree)
+    while true
+        if level(cell) == 0 return cell end
+        cell = cell.parent
+    end
+end
+
 function siblings(cell::Tree{N}) where N
     if level(cell) <= 0 return nothing end
     return cell.parent.children

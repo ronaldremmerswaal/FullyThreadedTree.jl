@@ -26,7 +26,8 @@ module FullyThreadedTree
            initialized,
            level,
            faces,
-           siblings
+           siblings,
+           root
 
     include("interface.jl")
 

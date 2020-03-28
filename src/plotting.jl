@@ -8,7 +8,7 @@ function plot!(tree::Tree{1}; filter::Function = active)
         push!(Y, cell.state)
     end
 
-    max_level = levels(tree) - 1
+    max_level = levels(root(tree)) - 1
     plot(X, Y, legend = false)
     plot!(X, zeros(length(X)), seriestype=:scatter, markersize = 20. /  (1 << max_level))
 
@@ -31,7 +31,7 @@ function plot!(tree::Tree{2}; markers::Bool = false, max_marker_level::Int = 5, 
         append!(X, cell.position[1] .+ [-1., 1., 1., -1., -1.] / (2 << (level(cell))))
         append!(Y, cell.position[2] .+ [-1., -1., 1., 1., -1.] / (2 << (level(cell))))
     end
-    max_level = levels(tree) - 1
+    max_level = levels(root(tree)) - 1
     linewidth0 = 4.
     linewidth = linewidth0 / (1 << max_level)
     plot!(X, Y, legend = false, color=:black, linewidth = linewidth)
@@ -80,7 +80,7 @@ function plot!(tree::Tree{3}; markers::Bool = false, max_marker_level::Int = 5, 
     Y = Vector()
     Z = Vector()
 
-    max_level = levels(tree) - 1
+    max_level = levels(root(tree)) - 1
     linewidth0 = 4.
     linewidth = linewidth0 / (1 << max_level)
     if wireframe
