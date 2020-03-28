@@ -70,7 +70,7 @@ function Base.show(io::IO, tree::Tree)
 end
 
 @inline cells(tree::Tree; filter::Function = cell -> true, min_level = 0, max_level = typemax(Int)) = (tree, filter, min_level, max_level)
-@inline cells(tree::Tree, level::Int; filter::Function = cell -> true, min_level = max(0, level), max_level = min(level, typemax(Int))) = (tree, filter, min_level, max_level)
+@inline cells(tree::Tree, level::Int; filter::Function = cell -> true) = (tree, filter, level, level)
 
 function Base.length(tuple::Tuple{Tree, Function, Int, Int})
     count = 0
@@ -129,7 +129,7 @@ end
 
 # Iterators over all of the faces
 @inline all_faces(tree::Tree; filter::Function = face -> true, min_level::Int = 0, max_level::Int = typemax(Int)) = (tree.faces[1], filter, min_level, max_level)
-@inline all_faces(tree::Tree, level::Int; filter::Function = face -> true, min_level::Int = max(0, level), max_level::Int = min(level, typemax(Int))) = (tree.faces[1], filter, min_level, max_level)
+@inline all_faces(tree::Tree, level::Int; filter::Function = face -> true) = (tree.faces[1], filter, level, level)
 function Base.length(tuple::Tuple{Face, Function, Int, Int})
     count = 0
     for cell ∈ tuple
