@@ -1,6 +1,4 @@
-using Plots
-
-import Plots.plot
+import Plots, Plots.plot, Plots.plot!, Plots.current
 
 function plot(tree::Tree{1})
     X = Vector()
@@ -54,18 +52,16 @@ function plot(tree::Tree{2}; markers::Bool = false, max_marker_level::Int = 5, p
 
         X = Vector()
         Y = Vector()
-        for cell ∈ cells(tree, filter=active)
-            if level(cell) < max_marker_level
-                pos = centroid(cell)
-                push!(X, pos[1])
-                push!(Y, pos[2])
-            end
+        for cell ∈ cells(tree, filter=active, max_level = max_marker_level)
+            pos = centroid(cell)
+            push!(X, pos[1])
+            push!(Y, pos[2])
         end
         plot!(X, Y, seriestype = :scatter, markersize = markersize, markerstrokewidth = markerstrokewidth, marker = :circle)
 
         X = Vector()
         Y = Vector()
-        for face ∈ active_faces(tree)
+        for face ∈ all_faces(tree, filter = active)
             if level(face) < max_marker_level
                 pos = centroid(face)
                 push!(X, pos[1])
@@ -75,7 +71,7 @@ function plot(tree::Tree{2}; markers::Bool = false, max_marker_level::Int = 5, p
         plot!(X, Y, seriestype = :scatter, markersize = markersize, markerstrokewidth = markerstrokewidth, marker = :square)
     end
 
-    return current()
+    return Plots.current()
 end
 
 function plot(tree::Tree{3}; markers::Bool = false, max_marker_level::Int = 5, path::Bool = false, wireframe=true)
@@ -145,7 +141,7 @@ function plot(tree::Tree{3}; markers::Bool = false, max_marker_level::Int = 5, p
         X = Vector()
         Y = Vector()
         Z = Vector()
-        for face ∈ active_faces(tree)
+        for face ∈ all_faces(tree, filter = active)
             if level(face) < max_marker_level
                 pos = centroid(face)
                 push!(X, pos[1])

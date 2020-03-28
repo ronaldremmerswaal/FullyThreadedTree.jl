@@ -112,7 +112,7 @@ end
             child = (@nref $N children i)
 
             @nexprs $N d -> begin
-                # Half of the faces are siblings
+                # Half of the faces are between siblings
                 if i_d == 2
                     other_child = (@nref $N children k -> k == d ? other_side(i_d) : i_k)
                     child.faces[d,other_side(i_d)] = other_child.faces[d,i_d]
@@ -127,15 +127,25 @@ end
                     face = Face(child, DummyTree{$N}(), d, i_d, face_state)
                 else
                     if active(neighbour_parent)
-                        # Neighbouring parent has no children (at_refinement)
-                        if level(parent) == level(neighbour_parent)
-                            neighbour = neighbour_parent
+                        if level(parent) == 0
+                            # Periodic (neighbour_parent == parent); so all faces are between siblings
+                            if i_d == 2
+                                other_child = (@nref $N children k -> k == d ? other_side(i_d) : i_k)
+                                face = other_child.faces[d,other_side(i_d)]
+                            else
+                                face = Face(child, (@nref $N children k -> k == d ? other_side(i_d) : i_k), d, i_d, face_state)
+                            end
                         else
-                            # Ensure that difference in refined level is at most one between neighbouring cells
-                            refine!(neighbour_parent, cell_state = cell_state, face_state = face_state)
-                            neighbour = parent.faces[d,i_d].cells[i_d]
+                            # Neighbouring parent has no children (at_refinement)
+                            if level(parent) == level(neighbour_parent)
+                                neighbour = neighbour_parent
+                            else
+                                # Ensure that difference in refined level is at most one between neighbouring cells
+                                refine!(neighbour_parent, cell_state = cell_state, face_state = face_state)
+                                neighbour = parent.faces[d,i_d].cells[i_d]
+                            end
+                            face = Face(child, neighbour, d, i_d, face_state)
                         end
-                        face = Face(child, neighbour, d, i_d, face_state)
                     else
                         # If neighbouring parent has children, then take neighbouring child (regular)
                         neighbour_children = neighbour_parent.children
