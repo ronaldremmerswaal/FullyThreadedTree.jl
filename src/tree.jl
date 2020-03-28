@@ -1,6 +1,6 @@
 struct DummyTree{N} <: AbstractTree{N} end
 
-mutable struct BoundaryTree{N} <: AbstractTree{N}
+struct BoundaryTree{N} <: AbstractTree{N}
     level::Int
     position::Vector
     face::Face{N}
@@ -8,7 +8,7 @@ mutable struct BoundaryTree{N} <: AbstractTree{N}
 end
 
 # A N-dimensional tree
-mutable struct Tree{N} <: AbstractTree{N}
+struct Tree{N} <: AbstractTree{N}
     parent::Tree{N}
     level::Int
     position::Vector
@@ -56,7 +56,7 @@ function refine!(cell::Tree{N}; cell_state::Function = x -> nothing, face_state 
 
         # Set faces of children (may contain a call ro refine! due to graded refinement)
         initialize_faces_of_children!(children, cell, cell_state, face_state)
-        cell.children = children
+        append!(cell.children, reshape(children, length(children)))
 
         # NB the neighbouring faces of equal level are updated in initialize_faces_of_children!
     elseif recurse
@@ -107,6 +107,7 @@ end
 # NB when this function is called, it is assumed that the faces are fully initialized
 # up untill and including level=level(cell)
 @generated function initialize_faces_of_children!(children::Array{Tree{N}, N}, parent::Tree{N}, cell_state::Function, face_state) where N
+    twos = Tuple(2*ones(Int64, N))
     quote
         @nloops $N i d->1:2 @inbounds begin
             child = (@nref $N children i)
@@ -148,7 +149,7 @@ end
                         end
                     else
                         # If neighbouring parent has children, then take neighbouring child (regular)
-                        neighbour_children = neighbour_parent.children
+                        neighbour_children = reshape(neighbour_parent.children, $twos)
                         neighbour = (@nref $N neighbour_children k -> k == d ? other_side(i_d) : i_k)
 
                         # face = Face(neighbour, child, d, other_side(i_d), face_state)
