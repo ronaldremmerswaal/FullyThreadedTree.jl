@@ -1,12 +1,12 @@
 Base.iterate(tree::Tree) = iterate((tree, x->true, typemax(Int)))
 
-function Base.iterate(tuple::Tuple{Tree, Function, Int}, state = (tuple[1], 0, Vector{Int}()))
+function Base.iterate(tuple::Tuple{Tree, Function, Int, Int}, state = (tuple[1], 0, Vector{Int}()))
     cell, count, indices = state
 
     if cell == nothing return nothing end
-    tree, filter, max_level = tuple
+    tree, filter, min_level, max_level = tuple
 
-    cell, next_cell = find_next_filtered_cell!(cell, indices, filter, max_level)
+    cell, next_cell = find_next_filtered_cell!(cell, indices, filter, min_level, max_level)
     if cell == nothing
         return nothing
     else
@@ -15,9 +15,9 @@ function Base.iterate(tuple::Tuple{Tree, Function, Int}, state = (tuple[1], 0, V
 
 end
 
-function find_next_filtered_cell!(cell::Tree{N}, indices::Vector{Int}, filter::Function, max_level::Int) where N
+function find_next_filtered_cell!(cell::Tree{N}, indices::Vector{Int}, filter::Function, min_level::Int, max_level::Int) where N
     next_cell = find_next_cell!(cell, indices, max_level)
-    while !filter(cell)
+    while !filter(cell) || (min_level > 0 && level(cell) < min_level)
         cell = next_cell
         if cell == nothing break end
         next_cell = find_next_cell!(cell, indices, max_level)
@@ -64,19 +64,15 @@ function Base.show(io::IO, tree::Tree)
             print(io, "on level $(level(tree)) ")
         end
         if !active(tree) && !compact
-            print(io, "with $(levels(tree)) levels and $(length(active_cells(tree))) active_cells out of $(length(cells(tree))) cells")
+            print(io, "with $(levels(tree)) levels and $(length(cells(tree, filter=active))) active_cells out of $(length(cells(tree))) cells")
         end
     end
 end
 
-cells(tree::Tree) = (tree, cell -> true, typemax(Int))
-cells(tree::Tree, lvl::Int) = (tree, cell -> level(cell) == lvl, lvl)
-active_cells(tree::Tree) = (tree, active, typemax(Int))
-active_cells(tree::Tree, lvl::Int) = (tree, cell -> active(cell) && level(cell) == lvl, lvl)
-parents_of_active_cell(tree::Tree) = (tree, parent_of_active, typemax(Int))
-parents_of_active_cell(tree::Tree, lvl::Int) = (tree, cell -> parent_of_active(cell) && level(cell) == lvl, lvl)
+@inline cells(tree::Tree; filter::Function = cell -> true, min_level = 0, max_level = typemax(Int)) = (tree, filter, min_level, max_level)
+@inline cells(tree::Tree, level::Int; filter::Function = cell -> true, min_level = max(0, level), max_level = min(level, typemax(Int))) = (tree, filter, min_level, max_level)
 
-function Base.length(tuple::Tuple{Tree, Function, Int})
+function Base.length(tuple::Tuple{Tree, Function, Int, Int})
     count = 0
     for cell ∈ tuple
         count += 1
@@ -85,18 +81,18 @@ function Base.length(tuple::Tuple{Tree, Function, Int})
 end
 
 # Iterate over the faces, starting at the left-hand side (first dimension) face of some tree
-function Base.iterate(tuple::Tuple{Face, Function, Int}, state = (tuple[1], 0, tuple[1].cells[2], Vector{Int}(), [1, 1]))
+function Base.iterate(tuple::Tuple{Face, Function, Int, Int}, state = (tuple[1], 0, tuple[1].cells[2], Vector{Int}(), [1, 1]))
     face, count, cell, cell_indices, face_indices = state
 
     if face == nothing return nothing end
-    tree, filter, max_level = tuple
+    tree, filter, min_level, max_level = tuple
 
     next_face, cell = find_next_face!(face_indices, cell_indices, cell, max_level)
-    face_good = filter(face)
+    face_good = filter(face) && (min_level == 0 || level(face) >= min_level)
     while cell != nothing && !face_good
         face = next_face
         next_face, cell = find_next_face!(face_indices, cell_indices, cell, max_level)
-        face_good = filter(face)
+        face_good = filter(face) && (min_level == 0 || level(face) >= min_level)
     end
     if cell == nothing next_face = nothing end
 
@@ -131,18 +127,9 @@ function find_next_face!(face_indices::Vector{Int}, cell_indices::Vector{Int}, c
     return cell.faces[face_indices[1],face_indices[2]], cell
 end
 
-faces(tree::Tree) = (tree.faces[1], face -> true, typemax(Int))
-faces(tree::Tree, f::Function) = (tree.faces[1], f, typemax(Int))
-faces(tree::Tree, lvl::Int) = (tree.faces[1], face -> level(face) == lvl, lvl)
-boundary_faces(tree::Tree) = (tree.faces[1], at_boundary, typemax(Int))
-boundary_faces(tree::Tree, lvl::Int) = (tree.faces[1], face -> at_boundary(face) && level(face) == lvl, lvl)
-refinement_faces(tree::Tree) = (tree.faces[1], at_refinement, typemax(Int))
-refinement_faces(tree::Tree, lvl::Int) = (tree.faces[1], face -> at_refinement(face) && level(face) == lvl, lvl)
-regular_faces(tree::Tree) = (tree.faces[1], regular, typemax(Int))
-regular_faces(tree::Tree, lvl::Int) = (tree.faces[1], face -> regular(face) && level(face) == lvl, lvl)
-active_faces(tree::Tree) = (tree.faces[1], active, typemax(Int))
-active_faces(tree::Tree, lvl::Int) = (tree.faces[1], face -> active(face) && level(face) == lvl, lvl)
-function Base.length(tuple::Tuple{Face, Function, Int})
+@inline faces(tree::Tree; filter::Function = face -> true, min_level::Int = 0, max_level::Int = typemax(Int)) = (tree.faces[1], filter, min_level, max_level)
+@inline faces(tree::Tree, level::Int; filter::Function = face -> true, min_level::Int = max(0, level), max_level::Int = min(level, typemax(Int))) = (tree.faces[1], filter, min_level, max_level)
+function Base.length(tuple::Tuple{Face, Function, Int, Int})
     count = 0
     for cell ∈ tuple
         count += 1

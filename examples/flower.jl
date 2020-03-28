@@ -28,7 +28,7 @@ function adaptive_refinement(fun::Function, max_steps::Int, error_tolerance; pri
         if print_table
             push!(integral, integrate(tree))
             push!(nr_of_cells, length(cells(tree)))
-            push!(nr_of_active_cells, length(active_cells(tree)))
+            push!(nr_of_active_cells, length(cells(tree, filter=active)))
         end
         marked = Vector{Tree}()
 
@@ -36,7 +36,7 @@ function adaptive_refinement(fun::Function, max_steps::Int, error_tolerance; pri
             push!(max_error, 0.)
             push!(nr_marked_cells, 0)
         end
-        for cell ∈ parents_of_active_cell(tree)
+        for cell ∈ cells(tree, filter=parent_of_active)
             error_estimate = abs(cell.state - sum([child.state for child ∈ cell.children]) / (1<<dim))
             if print_table max_error[end] = max(error_estimate, max_error[end]) end
             if error_estimate > error_tolerance

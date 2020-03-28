@@ -1,5 +1,12 @@
 struct DummyTree{N} <: AbstractTree{N} end
 
+mutable struct BoundaryTree{N} <: AbstractTree{N}
+    level::Int
+    position::Vector
+    face::Face{N}
+    state
+end
+
 # A N-dimensional tree
 mutable struct Tree{N} <: AbstractTree{N}
     parent::Tree{N}

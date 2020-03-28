@@ -1,6 +1,6 @@
 function integrate(tree::Tree)
     state = zero(tree.state)
-    for leaf ∈ active_cells(tree)
+    for leaf ∈ cells(tree, filter=active)
         state += leaf.state * volume(leaf)
     end
     return state

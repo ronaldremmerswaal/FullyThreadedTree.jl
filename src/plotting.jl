@@ -6,7 +6,7 @@ function plot(tree::Tree{1})
     X = Vector()
     Y = Vector()
     max_level = 0
-    for cell ∈ active_cells(tree)
+    for cell ∈ cells(tree, filter=active)
         push!(X, cell.position[1])
         push!(Y, cell.state)
 
@@ -24,7 +24,7 @@ function plot(tree::Tree{2}; markers::Bool = false, max_marker_level::Int = 5, p
     Y = Vector()
 
     max_level = 0
-    for cell ∈ active_cells(tree)
+    for cell ∈ cells(tree, filter=active)
         append!(X, NaN)
         append!(Y, NaN)
 
@@ -40,7 +40,7 @@ function plot(tree::Tree{2}; markers::Bool = false, max_marker_level::Int = 5, p
     if path
         X = Vector()
         Y = Vector()
-        for cell ∈ active_cells(tree)
+        for cell ∈ cells(tree, filter=active)
             pos = centroid(cell)
             push!(X, pos[1])
             push!(Y, pos[2])
@@ -54,7 +54,7 @@ function plot(tree::Tree{2}; markers::Bool = false, max_marker_level::Int = 5, p
 
         X = Vector()
         Y = Vector()
-        for cell ∈ active_cells(tree)
+        for cell ∈ cells(tree, filter=active)
             if level(cell) < max_marker_level
                 pos = centroid(cell)
                 push!(X, pos[1])
@@ -89,7 +89,7 @@ function plot(tree::Tree{3}; markers::Bool = false, max_marker_level::Int = 5, p
     if wireframe
         xloop = [-1., 1., 1., -1., -1.]
         yloop = [-1., -1., 1., 1., -1.]
-        for cell ∈ active_cells(tree)
+        for cell ∈ cells(tree, filter=active)
             append!(X, NaN)
             append!(Y, NaN)
             append!(Z, NaN)
@@ -116,7 +116,7 @@ function plot(tree::Tree{3}; markers::Bool = false, max_marker_level::Int = 5, p
         X = Vector()
         Y = Vector()
         Z = Vector()
-        for cell ∈ active_cells(tree)
+        for cell ∈ cells(tree, filter=active)
             pos = centroid(cell)
             push!(X, pos[1])
             push!(Y, pos[2])
@@ -132,7 +132,7 @@ function plot(tree::Tree{3}; markers::Bool = false, max_marker_level::Int = 5, p
         X = Vector()
         Y = Vector()
         Z = Vector()
-        for cell ∈ active_cells(tree)
+        for cell ∈ cells(tree, filter=active)
             if level(cell) < max_marker_level
                 pos = centroid(cell)
                 push!(X, pos[1])
