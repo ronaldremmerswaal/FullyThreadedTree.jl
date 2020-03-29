@@ -25,17 +25,21 @@ function face_area(cell::Tree{N}, face::Face{N}) where N
 end
 
 function centroid(cells::Tuple{AbstractTree{N}, AbstractTree{N}}, direction) where N
-    if initialized(cells[1]) && initialized(cells[2])
-        idx = level(cells[1]) > level(cells[2]) ? 1 : 2
+    if level(cells[1]) == level(cells[2])
+        position = (cells[1].position + cells[2].position) / 2
     else
-        idx = initialized(cells[1]) ? 1 : 2
-    end
+        if initialized(cells[1]) && initialized(cells[2])
+            idx = level(cells[1]) > level(cells[2]) ? 1 : 2
+        else
+            idx = initialized(cells[1]) ? 1 : 2
+        end
 
-    position = copy(cells[idx].position)
-    if idx == 1
-        position[direction] += 1. / (2<<level(cells[idx]))
-    else
-        position[direction] -= 1. / (2<<level(cells[idx]))
+        position = copy(cells[idx].position)
+        if idx == 1
+            position[direction] += 1. / (2<<level(cells[idx]))
+        else
+            position[direction] -= 1. / (2<<level(cells[idx]))
+        end
     end
     return position
 end

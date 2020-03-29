@@ -21,23 +21,21 @@ function adaptive_refinement(fun::Function, max_steps::Int, error_tolerance; plo
         nr_marked_cells = Vector()
     end
 
-    marked = Vector{Tree{dim}}()
-    push!(marked, tree)
+    marked = [tree]
     for steps = 1:max_steps
 
         refine!(marked, cell_state = fun, recurse = true)
+        cells = collect_cells(tree)
         if collect_data
             push!(integral, integrate(tree))
-            push!(nr_of_cells, length(cells(tree)))
-            push!(nr_of_active_cells, length(cells(tree, filter=active)))
-        end
-        marked = Vector{Tree{dim}}()
-
-        if collect_data
+            push!(nr_of_cells, length(cells))
+            push!(nr_of_active_cells, length(filter(active, cells)))
             push!(max_error, 0.)
             push!(nr_marked_cells, 0)
         end
-        for cell ∈ cells(tree, filter=parent_of_active)
+
+        marked = Vector{Tree{dim}}()
+        for cell ∈ filter(parent_of_active, cells)
             error_estimate = abs(cell.state - sum([child.state for child ∈ cell.children]) / (1<<dim))
             if collect_data max_error[end] = max(error_estimate, max_error[end]) end
             if error_estimate > error_tolerance
