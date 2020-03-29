@@ -6,14 +6,6 @@ function integrate(tree::Tree)
     return state
 end
 
-function levels(tree::Tree)
-    lvl = 0
-    for cell ∈ cells(tree)
-        lvl = max(lvl, level(cell))
-    end
-    return 1 + lvl
-end
-
 # function polytope(tree::Tree{N}) where T
 #     poly = Vector(undef, N)
 #     poly[1] = cell.position[1] .+ [-1., 1., 1., -1., -1.] / (2 << (level(cell)))
@@ -60,4 +52,4 @@ function cell_distance(face::Face)
     return dist
 end
 
-@inline cell_volume(face::Face) = cell_distance(face) * area(face)
+@inline cell_volume(face::Face) = (volume(face.cells[1]) + volume(face.cells[2])) / 2

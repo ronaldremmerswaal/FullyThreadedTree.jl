@@ -44,3 +44,25 @@ end
 
 @inline level(face::Face) = max(level(face.cells[1]), level(face.cells[2]))
 @inline direction(face::Face) = face.face_direction
+
+function collect_faces(tree::AbstractTree{N}; filter::Function = face -> true) where N
+    faces = Vector{Face{N}}()
+    collect_faces!(faces, tree, filter)
+    return faces
+end
+
+function collect_faces!(faces::Vector{Face{N}}, tree::AbstractTree{N}, filter::Function) where N
+    @inbounds for dir=1:N, side=1:2
+        face = tree.faces[dir, side]
+        if (side==1 || !regular(face)) && filter(face)
+            push!(faces, face)
+        end
+    end
+    if isempty(tree.children)
+        return
+    else
+        for child ∈ tree.children
+            collect_faces!(faces, child, filter)
+        end
+    end
+end

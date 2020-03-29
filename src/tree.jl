@@ -43,6 +43,13 @@ end
 
 @inline level(cell::Tree) = cell.level
 @inline level(cell::AbstractTree) = -1
+function levels(tree::Tree)
+    lvl = 0
+    for cell ∈ cells(tree)
+        lvl = max(lvl, level(cell))
+    end
+    return 1 + lvl
+end
 
 @inline active(cell::Tree) = isempty(cell.children)
 @inline active(cell::AbstractTree) = false
@@ -244,6 +251,23 @@ end
                     neighbour.faces[d,other_side(i_d)] = Face(neighbour, parent, d, other_side(i_d), face_state)
                 end
             end
+        end
+    end
+end
+
+function collect_cells(tree::Tree{N}; filter = cell -> true) where N
+    cells = Vector{Tree{N}}()
+    collect_cells!(cells, tree, filter)
+    return cells
+end
+
+function collect_cells!(cells::Vector{Tree{N}}, tree::Tree{N}, filter::Function) where N
+    if filter(tree) push!(cells, tree) end
+    if isempty(tree.children)
+        return
+    else
+        for child ∈ tree.children
+            collect_cells!(cells, child, filter)
         end
     end
 end

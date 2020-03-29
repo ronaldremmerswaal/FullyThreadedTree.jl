@@ -13,7 +13,8 @@ module FullyThreadedTree
            at_refinement,
            regular,
            active,
-           level
+           level,
+           collect_faces
 
     include("tree.jl")
 
@@ -27,7 +28,8 @@ module FullyThreadedTree
            level,
            faces,
            siblings,
-           root
+           root,
+           collect_cells
 
     include("interface.jl")
 
@@ -37,13 +39,13 @@ module FullyThreadedTree
            cells,
            all_faces
 
-
     include("tools.jl")
 
     export volume,
            centroid,
            integrate,
            cell_distance,
+           cell_volume,
            area,
            volume,
            levels
