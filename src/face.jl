@@ -7,7 +7,19 @@ struct Face{N} <: AbstractFace{N}
     Face{N}() where N = new()
     Face{N}(cells, face_direction, state) where N = new(cells, face_direction, state)
 end
-cells(face::Face) = face.cells
+
+function cells(face::Face; with_fine_siblings = true)
+    if !with_fine_siblings || !at_refinement(face)
+        return face.cells
+    else
+        # TODO return iterator
+        if level(face) == level(face.cells[2])
+            return cat(face.cells[1], siblings(face.cells[2], face.face_direction, 1), dims=1)
+        else
+            return cat(siblings(face.cells[1], face.face_direction, 2), face.cells[2], dims=1)
+        end
+    end
+end
 
 # Initialize a face, here Val indicates the side (1 or 2) relative to cell of this face
 function Face(cell::AbstractTree{N}, other_cell::AbstractTree{N}, face_direction, side, state::Function) where N
@@ -24,7 +36,7 @@ end
 @inline regular(face::Face) = level(face.cells[1]) == level(face.cells[2])
 @inline regular(face::AbstractFace) = false
 
-@inline active(face::Face) = (active(face.cells[1]) && active(face.cells[2])) || (at_boundary(face) && (active(face.cells[1]) || active(face.cells[2])))
+@inline active(face::Face) = (active(face.cells[1]) && active(face.cells[2]))# || (at_boundary(face) && (active(face.cells[1]) || active(face.cells[2])))
 @inline active(face::AbstractFace) = false
 
 @inline initialized(face::AbstractFace) = false

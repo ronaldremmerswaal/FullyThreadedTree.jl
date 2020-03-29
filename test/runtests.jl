@@ -6,7 +6,7 @@ using Test
     function total_volume_via_faces(tree)
         vol = 0.0
         for face ∈ active_faces(tree)
-            vol += volume(face)
+            vol += cell_volume(face)
         end
         return vol
     end

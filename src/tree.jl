@@ -32,7 +32,13 @@ function Tree(position; cell_state::Function = x->nothing, face_state = nothing,
 end
 
 
-@inline faces(cell::Tree) = cell.faces
+function faces(cell::Tree; with_fine_siblings = true)
+    if !with_fine_siblings
+        return cell.faces
+    else
+
+    end
+end
 @inline faces(cell::AbstractTree{N}) where N = fill(Tree{N}(), 0, 0)
 
 @inline level(cell::Tree) = cell.level

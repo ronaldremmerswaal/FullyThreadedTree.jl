@@ -23,8 +23,15 @@ end
 @inline volume(cell::Tree{N}) where N = 1. / (1 << (N*level(cell)))
 @inline centroid(cell::Tree) = cell.position
 
-
 @inline area(face::Face{N}) where N = 1. / (1 << ((N-1)*level(face)))
+function face_area(cell::Tree{N}, face::Face{N}) where N
+    if !at_refinement(face) || level(cell) != level(face)
+        return area(face)
+    else
+        return area(face) / 2
+    end
+end
+
 function centroid(cells::Tuple{AbstractTree{N}, AbstractTree{N}}, direction) where N
     if initialized(cells[1]) && initialized(cells[2])
         idx = level(cells[1]) > level(cells[2]) ? 1 : 2
@@ -53,4 +60,4 @@ function cell_distance(face::Face)
     return dist
 end
 
-@inline volume(face::Face) = cell_distance(face) * area(face)
+@inline cell_volume(face::Face) = cell_distance(face) * area(face)
