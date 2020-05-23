@@ -20,7 +20,7 @@ function face_area(cell::Tree{N}, face::Face{N}) where N
     if !at_refinement(face) || level(cell) != level(face)
         return area(face)
     else
-        return area(face) / 2
+        return area(face) / 1 << (N-1)
     end
 end
 
@@ -52,7 +52,7 @@ function cell_distance(face::Face)
     return dist
 end
 
-function cell_volume(face::Face{N}) where N 
+function cell_volume(face::Face{N}) where N
     if !at_refinement(face)
         return volume(face.cells[1])
     else

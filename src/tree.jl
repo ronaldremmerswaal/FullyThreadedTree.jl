@@ -35,7 +35,7 @@ function faces(cell::Tree{N}; with_fine_siblings = true) where N
     if !with_fine_siblings
         return cell.faces
     else
-        faces_incl_fine = Vector{Face}()
+        faces_incl_fine = Vector{Face{N}}()
         for dir=1:N, side=1:2
             face = cell.faces[dir, side]
             if active(face) || at_boundary(face)
@@ -104,7 +104,7 @@ end
         return (@nref $N children d -> d == dir ? side : (:))
     end
 end
-
+@inline subset_of_children(cell::Tree{1}, dir::Int, side::Int) = return [cell.children[side]]
 
 # Refine a single leaf (graded)
 function refine!(cell::Tree{N}; cell_state::Function = x -> nothing, face_state = nothing, recurse = false) where N
