@@ -58,11 +58,7 @@ function collect_faces!(faces::Vector{Face{N}}, tree::AbstractTree{N}, filter::F
             push!(faces, face)
         end
     end
-    if isempty(tree.children)
-        return
-    else
-        for child ∈ tree.children
-            collect_faces!(faces, child, filter)
-        end
+    for child ∈ tree.children
+        collect_faces!(faces, child, filter)
     end
 end

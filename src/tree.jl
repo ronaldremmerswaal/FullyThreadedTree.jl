@@ -13,7 +13,7 @@ struct Tree{N} <: AbstractTree{N}
     level::Int
     position::Vector
     faces::Array{Face{N}, 2}            # index1 = direction (x/y), index2 = side (left/right), ...
-    children::Vector{Tree{N}}           # index1 = x-direction, index2 = y-direction, ... (reshape(N, N, N...))
+    children::Vector{Tree{N}}           # index1 = x-direction, index2 = y-direction, ... (reshape(2, 2, 2...))
     state
 
     Tree{N}() where N = new()
@@ -31,12 +31,24 @@ function Tree(position; cell_state::Function = x->nothing, face_state = nothing,
     return tree
 end
 
-
-function faces(cell::Tree; with_fine_siblings = true)
+function faces(cell::Tree{N}; with_fine_siblings = true) where N
     if !with_fine_siblings
         return cell.faces
     else
-
+        faces_incl_fine = Vector{Face}()
+        for dir=1:2, side=1:N
+            face = cell.faces[dir, side]
+            if active(face) || at_boundary(face)
+                push!(faces_incl_fine, face)
+            else
+                # face is 'below' refinement interface
+                neighbours = siblings(face.cells[dir], other_side(dir), side)
+                for neighbour ∈ neighbours
+                    push!(faces_incl_fine, neighbour.faces[other_side(dir), side])
+                end
+            end
+        end
+        return faces_incl_fine
     end
 end
 @inline faces(cell::AbstractTree{N}) where N = fill(Tree{N}(), 0, 0)
@@ -68,14 +80,14 @@ function root(cell::Tree)
 end
 
 function siblings(cell::Tree{N}) where N
-    if level(cell) <= 0 return nothing end
+    if level(cell) <= 0 return cell end
     return cell.parent.children
 end
 
 @generated function siblings(cell::Tree{N}, dir::Int, side::Int) where N
     twos = Tuple(2*ones(Int64, N))
     quote
-        if level(cell) <= 0 return nothing end
+        if level(cell) <= 0 return cell end
 
         fine_cells = reshape(cell.parent.children, $twos)
         # TODO return view
@@ -263,11 +275,7 @@ end
 
 function collect_cells!(cells::Vector{Tree{N}}, tree::Tree{N}, filter::Function) where N
     if filter(tree) push!(cells, tree) end
-    if isempty(tree.children)
-        return
-    else
-        for child ∈ tree.children
-            collect_cells!(cells, child, filter)
-        end
+    for child ∈ tree.children
+        collect_cells!(cells, child, filter)
     end
 end
