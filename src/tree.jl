@@ -36,18 +36,19 @@ function faces(cell::Tree{N}; with_fine_siblings = true) where N
         return cell.faces
     else
         faces_incl_fine = Vector{Face}()
-        for dir=1:2, side=1:N
+        for dir=1:N, side=1:2
             face = cell.faces[dir, side]
             if active(face) || at_boundary(face)
                 push!(faces_incl_fine, face)
             else
                 # face is 'below' refinement interface
-                neighbours = siblings(face.cells[dir], other_side(dir), side)
-                for neighbour ∈ neighbours
-                    push!(faces_incl_fine, neighbour.faces[other_side(dir), side])
+                fine_neighbours = subset_of_children(face.cells[side], dir, other_side(side))
+                for fine_neighbour ∈ fine_neighbours
+                    push!(faces_incl_fine, fine_neighbour.faces[dir, other_side(side)])
                 end
             end
         end
+        # TODO return iterator
         return faces_incl_fine
     end
 end
@@ -80,18 +81,27 @@ function root(cell::Tree)
 end
 
 function siblings(cell::Tree{N}) where N
-    if level(cell) <= 0 return cell end
-    return cell.parent.children
+    if level(cell) <= 0
+        return cell
+    else
+        return cell.parent.children
+    end
 end
 
-@generated function siblings(cell::Tree{N}, dir::Int, side::Int) where N
+function siblings(cell::Tree{N}, dir::Int, side::Int) where N
+    if level(cell) <= 0
+        return cell
+    else
+        return subset_of_children(cell.parent, dir, side)
+    end
+end
+
+@generated function subset_of_children(cell::Tree{N}, dir::Int, side::Int) where N
     twos = Tuple(2*ones(Int64, N))
     quote
-        if level(cell) <= 0 return cell end
-
-        fine_cells = reshape(cell.parent.children, $twos)
+        children = reshape(cell.children, $twos)
         # TODO return view
-        return (@nref $N fine_cells d -> d == dir ? side : (:))
+        return (@nref $N children d -> d == dir ? side : (:))
     end
 end
 
