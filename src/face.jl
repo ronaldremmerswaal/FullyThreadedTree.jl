@@ -8,15 +8,15 @@ struct Face{N} <: AbstractFace{N}
     Face{N}(cells, face_direction, state) where N = new(cells, face_direction, state)
 end
 
-function cells(face::Face; with_fine_siblings = true)
+function cells(face::Face{N}; with_fine_siblings = true) where N
     if !with_fine_siblings || !at_refinement(face)
         return face.cells
     else
         # TODO return iterator
         if level(face) == level(face.cells[2])
-            return cat(face.cells[1], siblings(face.cells[2], face.face_direction, 1), dims=1)
+            return cat(face.cells[1], reshape(siblings(face.cells[2], face.face_direction, 1), 1<<(N-1)), dims=1)
         else
-            return cat(siblings(face.cells[1], face.face_direction, 2), face.cells[2], dims=1)
+            return cat(reshape(siblings(face.cells[1], face.face_direction, 2), 1<<(N-1)), face.cells[2], dims=1)
         end
     end
 end

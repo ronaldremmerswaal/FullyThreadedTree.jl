@@ -104,7 +104,7 @@ end
         return (@nref $N children d -> d == dir ? side : (:))
     end
 end
-@inline subset_of_children(cell::Tree{1}, dir::Int, side::Int) = return [cell.children[side]]
+@inline subset_of_children(cell::Tree{1}, dir::Int, side::Int) = return view(cell.children, side)
 
 # Refine a single leaf (graded)
 function refine!(cell::Tree{N}; cell_state::Function = x -> nothing, face_state = nothing, recurse = false) where N
