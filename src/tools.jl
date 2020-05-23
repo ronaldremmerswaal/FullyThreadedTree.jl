@@ -52,4 +52,10 @@ function cell_distance(face::Face)
     return dist
 end
 
-@inline cell_volume(face::Face) = (volume(face.cells[1]) + volume(face.cells[2])) / 2
+function cell_volume(face::Face{N}) where N 
+    if !at_refinement(face)
+        return volume(face.cells[1])
+    else
+        return 1.5 / (1 << (N*level(face)))
+    end
+end
