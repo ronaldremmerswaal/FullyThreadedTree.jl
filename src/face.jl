@@ -43,7 +43,6 @@ end
 @inline initialized(face::Face) = true
 
 @inline level(face::Face) = max(level(face.cells[1]), level(face.cells[2]))
-@inline direction(face::Face) = face.face_direction
 
 function collect_faces(tree::AbstractTree{N}; filter::Function = face -> true) where N
     faces = Vector{Face{N}}()
